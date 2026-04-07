@@ -1,0 +1,380 @@
+/* ============================================================
+   SEVIMA AI CONTENT CREATOR — Global CSS
+   Design System v1.0 | UI/UX & Frontend Team
+   ============================================================
+   Cara pakai:
+   - Import file ini PERTAMA di project kamu
+   - Panggil variabel dengan: var(--nama-variabel)
+   - Contoh: background: var(--color-primary);
+   ============================================================ */
+
+/* @import font dari Google Fonts */
+@import url("https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap");
+
+
+/* ============================================================
+   1. COLOR TOKENS
+   ============================================================ */
+:root {
+
+  /* --- Primary: Blue --- */
+  --color-blue-50:  #EEF4FF;
+  --color-blue-100: #D9E8FF;
+  --color-blue-200: #B3CFFF;
+  --color-blue-300: #7DAFF8;
+  --color-blue-400: #4D8FF0;
+  --color-blue-500: #2370E8; /* PRIMARY — gunakan untuk tombol utama, link, ikon aktif */
+  --color-blue-600: #1A57C4;
+  --color-blue-700: #1340A0;
+  --color-blue-800: #0E2D7A;
+  --color-blue-900: #091E55;
+
+  /* Shortcut alias */
+  --color-primary:       var(--color-blue-500);
+  --color-primary-hover: var(--color-blue-600);
+  --color-primary-light: var(--color-blue-50);
+
+  /* --- Accent: Sunny Yellow --- */
+  --color-yellow-50:  #FFFBEA;
+  --color-yellow-200: #FDE68A;
+  --color-yellow-400: #FBBF24;
+  --color-yellow-500: #F59E0B; /* ACCENT */
+
+  /* Shortcut alias */
+  --color-accent: var(--color-yellow-500);
+
+  /* --- Supporting: Mint Green --- */
+  --color-mint-400: #34D399;
+  --color-mint-500: #10B981;
+
+  /* --- Supporting: Coral --- */
+  --color-coral-400: #FB7185;
+  --color-coral-500: #F43F5E;
+
+  /* --- Neutral --- */
+  --color-white:       #FFFFFF;
+  --color-neutral-50:  #F8F9FC; /* Background halaman */
+  --color-neutral-100: #EEF0F6; /* Background element ringan */
+  --color-neutral-200: #D9DCE8; /* Border default */
+  --color-neutral-300: #B0B7CC; /* Placeholder, border disabled */
+  --color-neutral-400: #7E88A3; /* Icon non-aktif */
+  --color-neutral-500: #5A6480; /* Teks deskripsi / caption */
+  --color-neutral-600: #3E4760; /* Teks sekunder */
+  --color-neutral-700: #2B3350; /* Teks body */
+  --color-neutral-800: #1A2038; /* Teks heading */
+  --color-neutral-900: #0D1224; /* Teks sangat gelap / dark bg */
+
+  /* Shortcut alias */
+  --color-bg:           var(--color-neutral-50);
+  --color-surface:      var(--color-white);
+  --color-border:       var(--color-neutral-200);
+  --color-text:         var(--color-neutral-700);
+  --color-text-heading: var(--color-neutral-800);
+  --color-text-muted:   var(--color-neutral-500);
+  --color-placeholder:  var(--color-neutral-300);
+
+  /* --- Semantic Colors --- */
+  --color-info:       var(--color-blue-500);   /* Pesan informasi */
+  --color-success:    var(--color-mint-500);   /* Berhasil, published */
+  --color-warning:    var(--color-yellow-500); /* Peringatan */
+  --color-error:      var(--color-coral-500);  /* Gagal, tidak valid */
+  --color-processing: var(--color-yellow-500); /* Status video sedang diproses */
+
+  /* Semantic backgrounds (untuk alert box & badge) */
+  --color-info-bg:       var(--color-blue-50);
+  --color-success-bg:    #ECFDF5;
+  --color-warning-bg:    #FFFBEB;
+  --color-error-bg:      #FFF1F2;
+  --color-processing-bg: #EAB308; /* Background badge Processing */
+
+
+  /* ============================================================
+     2. TYPOGRAPHY TOKENS
+     ============================================================ */
+
+  /* Font Family */
+  --font-display: "Nunito", sans-serif;       /* Heading, label, button, badge, nav */
+  --font-body:    "Plus Jakarta Sans", sans-serif; /* Paragraf, deskripsi, input */
+  --font-mono:    "Courier New", monospace;   /* Kode */
+
+  /* Font Size */
+  --text-display: 48px; /* Hero / splash */
+  --text-h1:      36px;
+  --text-h2:      28px;
+  --text-h3:      22px;
+  --text-h4:      18px;
+  --text-body-lg: 16px;
+  --text-body-md: 14px; /* Paling sering dipakai */
+  --text-caption: 12px;
+  --text-label:   12px;
+
+  /* Font Weight */
+  --weight-regular:   400;
+  --weight-medium:    500;
+  --weight-semibold:  600;
+  --weight-bold:      700;
+  --weight-extrabold: 800;
+  --weight-black:     900;
+
+  /* Line Height */
+  --leading-tight:  1.1;
+  --leading-snug:   1.3;
+  --leading-normal: 1.6;
+  --leading-relaxed: 1.75;
+
+  /* Letter Spacing */
+  --tracking-normal: 0;
+  --tracking-wide:   0.05em;  /* Untuk label uppercase */
+  --tracking-wider:  0.1em;
+
+
+  /* ============================================================
+     3. SPACING TOKENS (Base: 4px)
+     ============================================================ */
+
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-20: 80px;
+  --space-24: 96px;
+
+
+  /* ============================================================
+     4. BORDER RADIUS TOKENS
+     ============================================================ */
+
+  --radius-xs:   4px;     /* Tag sangat kecil, tooltip */
+  --radius-sm:   8px;     /* Button SM, badge */
+  --radius-md:   12px;    /* Button MD/LG, input field */
+  --radius-lg:   16px;    /* Card, panel, alert */
+  --radius-xl:   24px;    /* Modal, hero section */
+  --radius-full: 9999px;  /* Pill badge, avatar, toggle */
+
+
+  /* ============================================================
+     5. SHADOW TOKENS
+     ============================================================ */
+
+  --shadow-sm:   0 1px 3px rgba(13, 18, 36, 0.08), 0 1px 2px rgba(13, 18, 36, 0.06);
+  --shadow-md:   0 4px 12px rgba(13, 18, 36, 0.10), 0 2px 6px rgba(13, 18, 36, 0.07);
+  --shadow-lg:   0 8px 24px rgba(13, 18, 36, 0.12), 0 4px 10px rgba(13, 18, 36, 0.08);
+  --shadow-blue: 0 4px 16px rgba(35, 112, 232, 0.30); /* Khusus primary button */
+
+
+  /* ============================================================
+     6. TRANSITION TOKENS
+     ============================================================ */
+
+  --transition-fast:   all 0.15s ease;
+  --transition-normal: all 0.2s ease;
+  --transition-slow:   all 0.3s ease;
+
+
+  /* ============================================================
+     7. Z-INDEX TOKENS
+     ============================================================ */
+
+  --z-base:    0;
+  --z-raised:  10;
+  --z-dropdown: 100;
+  --z-sticky:  200;
+  --z-overlay: 300;
+  --z-modal:   400;
+  --z-toast:   500;
+
+
+  /* ============================================================
+     8. BREAKPOINT REFERENSI
+     ============================================================
+     Tidak bisa dipakai di var(), tapi tulis di sini sebagai
+     dokumentasi. Gunakan langsung di @media query.
+
+     Mobile  : max-width 639px
+     Tablet  : 640px - 1023px
+     Desktop : min-width 1024px
+     Wide    : min-width 1280px
+     ============================================================ */
+
+
+  /* ============================================================
+     9. LAYOUT TOKENS
+     ============================================================ */
+
+  /* Sidebar */
+  --sidebar-width:           272px;  /* Lebar sidebar saat terbuka */
+  --sidebar-width-collapsed: 72px;   /* Lebar sidebar saat diciutkan */
+
+  /* Topbar */
+  --topbar-height: 64px;
+
+  /* Video Thumbnail Overlay (durasi 0:45, 1:20, dll) */
+  --color-overlay-bg:   rgba(0, 0, 0, 0.55); /* Background label durasi */
+  --color-overlay-text: #FFFFFF;
+  --radius-thumbnail:   var(--radius-md);     /* Border radius thumbnail video */
+
+}
+
+
+/* ============================================================
+   10. CSS RESET & BASE STYLES
+   ============================================================ */
+
+*, *::before, *::after {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  font-size: 16px;
+  scroll-behavior: smooth;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  font-family: var(--font-body);
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-regular);
+  color: var(--color-text);
+  background-color: var(--color-bg);
+  line-height: var(--leading-normal);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Headings */
+h1, h2, h3, h4, h5, h6 {
+  font-family: var(--font-display);
+  color: var(--color-text-heading);
+  line-height: var(--leading-tight);
+}
+
+h1 { font-size: var(--text-h1); font-weight: var(--weight-extrabold); }
+h2 { font-size: var(--text-h2); font-weight: var(--weight-extrabold); }
+h3 { font-size: var(--text-h3); font-weight: var(--weight-bold); }
+h4 { font-size: var(--text-h4); font-weight: var(--weight-bold); }
+
+/* Paragraf */
+p {
+  font-size: var(--text-body-md);
+  color: var(--color-text);
+  line-height: var(--leading-normal);
+}
+
+/* Link */
+a {
+  color: var(--color-primary);
+  text-decoration: none;
+  transition: var(--transition-fast);
+}
+a:hover { color: var(--color-primary-hover); text-decoration: underline; }
+
+/* Gambar */
+img, video {
+  max-width: 100%;
+  display: block;
+}
+
+/* Input & Button reset */
+input, textarea, select, button {
+  font-family: var(--font-body);
+  font-size: var(--text-body-md);
+  outline: none;
+}
+
+button { cursor: pointer; border: none; background: none; }
+
+/* List reset */
+ul, ol { list-style: none; }
+
+/* Code */
+code, pre {
+  font-family: var(--font-mono);
+  font-size: var(--text-caption);
+}
+
+
+/* ============================================================
+   10. UTILITY CLASSES DASAR
+   ============================================================ */
+
+/* --- Text Colors --- */
+.text-primary  { color: var(--color-primary); }
+.text-muted    { color: var(--color-text-muted); }
+.text-heading  { color: var(--color-text-heading); }
+.text-success  { color: var(--color-success); }
+.text-warning  { color: var(--color-warning); }
+.text-error    { color: var(--color-error); }
+.text-white    { color: var(--color-white); }
+
+/* --- Font Families --- */
+.font-display { font-family: var(--font-display); }
+.font-body    { font-family: var(--font-body); }
+.font-mono    { font-family: var(--font-mono); }
+
+/* --- Font Weights --- */
+.font-regular   { font-weight: var(--weight-regular); }
+.font-medium    { font-weight: var(--weight-medium); }
+.font-semibold  { font-weight: var(--weight-semibold); }
+.font-bold      { font-weight: var(--weight-bold); }
+.font-extrabold { font-weight: var(--weight-extrabold); }
+.font-black     { font-weight: var(--weight-black); }
+
+/* --- Background Colors --- */
+.bg-primary { background-color: var(--color-primary); }
+.bg-surface { background-color: var(--color-surface); }
+.bg-page    { background-color: var(--color-bg); }
+
+/* --- Border --- */
+.border        { border: 1px solid var(--color-border); }
+.border-top    { border-top: 1px solid var(--color-border); }
+.border-bottom { border-bottom: 1px solid var(--color-border); }
+
+/* --- Border Radius --- */
+.rounded-sm   { border-radius: var(--radius-sm); }
+.rounded-md   { border-radius: var(--radius-md); }
+.rounded-lg   { border-radius: var(--radius-lg); }
+.rounded-xl   { border-radius: var(--radius-xl); }
+.rounded-full { border-radius: var(--radius-full); }
+
+/* --- Shadows --- */
+.shadow-sm   { box-shadow: var(--shadow-sm); }
+.shadow-md   { box-shadow: var(--shadow-md); }
+.shadow-lg   { box-shadow: var(--shadow-lg); }
+.shadow-blue { box-shadow: var(--shadow-blue); }
+
+/* --- Display --- */
+.flex         { display: flex; }
+.flex-col     { flex-direction: column; }
+.items-center { align-items: center; }
+.justify-center { justify-content: center; }
+.justify-between { justify-content: space-between; }
+.gap-2 { gap: var(--space-2); }
+.gap-3 { gap: var(--space-3); }
+.gap-4 { gap: var(--space-4); }
+.gap-6 { gap: var(--space-6); }
+
+/* --- Sizing --- */
+.w-full { width: 100%; }
+.h-full { height: 100%; }
+
+/* --- Visibility --- */
+.hidden { display: none; }
+.sr-only {
+  position: absolute; width: 1px; height: 1px;
+  padding: 0; margin: -1px; overflow: hidden;
+  clip: rect(0,0,0,0); white-space: nowrap; border: 0;
+}
+
+/* --- Scrollbar Custom --- */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--color-neutral-200); border-radius: var(--radius-full); }
+::-webkit-scrollbar-thumb:hover { background: var(--color-neutral-300); }
