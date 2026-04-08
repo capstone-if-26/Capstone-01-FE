@@ -30,7 +30,7 @@ export default function RegisterForm() {
         });
 
         console.log("Register success:", res);
-        alert("Register berhasil");
+        // alert("Register berhasil");
     } catch (error) {
         console.error("Register gagal:", error);
         alert("Register gagal");
