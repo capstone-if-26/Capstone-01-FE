@@ -1,3 +1,5 @@
+import { redirect } from "next/navigation";
+
 export default function HomePage() {
-  return <div>Welcome to AI Content Creator</div>;
+  redirect("/login");
 }
