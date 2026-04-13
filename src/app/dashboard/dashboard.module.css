@@ -1,0 +1,99 @@
+.dashboardContainer {
+  display: flex;
+  min-height: 100vh;
+  background-color: #f8f9fa;
+}
+
+.mainContent {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+.topHeader {
+  display: grid;
+  grid-template-columns: 1fr 2fr 1fr; /* Membagi header jadi 3 kolom */
+  align-items: center;
+  padding: 1rem 2rem;
+  background-color: white;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.headerLeft h3 {
+  margin: 0;
+  font-size: 1.1rem;
+  color: #212529;
+}
+
+.searchBar {
+  display: flex;
+  align-items: center;
+  background-color: #f8f9fa;
+  border: 1px solid #ced4da;
+  border-radius: 8px;
+  padding: 0.5rem 1rem;
+  gap: 0.5rem;
+  max-width: 400px;
+  margin: 0 auto; /* Tengah */
+}
+
+.searchBar input {
+  border: none;
+  background: transparent;
+  outline: none;
+  width: 100%;
+  font-size: 0.9rem;
+}
+
+.profileActions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 1rem;
+}
+
+.iconButton {
+  background: transparent;
+  border: none;
+  color: #6c757d;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.iconButton:hover {
+  color: #212529;
+}
+
+.contentWrapper {
+  padding: 2.5rem;
+  overflow-y: auto;
+}
+
+@media (max-width: 1024px) {
+  .topHeader {
+    grid-template-columns: 1fr 1fr; /* Header jadi 2 kolom */
+  }
+  .headerLeft {
+    display: none; /* Sembunyikan judul "New Project" di tablet agar search bar muat */
+  }
+}
+
+@media (max-width: 768px) {
+  .dashboardContainer {
+    flex-direction: column; /* Tumpuk sidebar ke atas pada layar HP */
+  }
+  .contentWrapper {
+    padding: 1.5rem; /* Kurangi jarak padding di HP */
+  }
+  .topHeader {
+    display: flex;
+    flex-direction: column-reverse; /* Search bar di bawah icon profile pada HP */
+    gap: 1rem;
+    padding: 1rem;
+  }
+  .searchBar {
+    width: 100%;
+    max-width: 100%;
+  }
+}

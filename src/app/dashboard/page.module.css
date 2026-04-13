@@ -1,0 +1,258 @@
+.pageContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 2rem;
+}
+
+/* Hero Section */
+.heroSection {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.heroSection h1 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.8rem;
+  color: #1a1a1a;
+}
+
+.heroSection p {
+  margin: 0;
+  color: #6c757d;
+}
+
+.primaryButton {
+  background-color: #0d6efd;
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  font-weight: 600;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Stats Section */
+.statsSection {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.statCard {
+  background-color: white;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  flex: 1;
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+}
+
+.statIconBlue {
+  background-color: #eff6ff;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statIconYellow {
+  background-color: #fef3c7;
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.statLabel {
+  font-size: 0.8rem;
+  color: #868e96;
+  margin: 0 0 0.25rem 0;
+  font-weight: 600;
+}
+
+.statValue {
+  font-size: 2rem;
+  margin: 0;
+  color: #212529;
+}
+
+/* Recent Content */
+.sectionHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1rem;
+}
+
+.sectionHeader h3 {
+  margin: 0;
+  color: #1a1a1a;
+}
+
+.viewAll {
+  color: #0d6efd;
+  text-decoration: none;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.gridContainer {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1.5rem;
+}
+
+.contentCard {
+  background-color: white;
+  border-radius: 12px;
+  border: 1px solid #e9ecef;
+  overflow: hidden;
+}
+
+.thumbnailPlaceholder {
+  background-color: #212529; /* Gelap seperti gambar */
+  height: 140px;
+  position: relative;
+}
+
+.duration {
+  position: absolute;
+  bottom: 8px;
+  right: 8px;
+  background-color: rgba(0,0,0,0.7);
+  color: white;
+  padding: 2px 6px;
+  border-radius: 4px;
+  font-size: 0.75rem;
+}
+
+.contentCard h4 {
+  margin: 1rem;
+  font-size: 1rem;
+  color: #212529;
+}
+
+.cardFooter {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 1rem 1rem;
+}
+
+.badgeGreen, .badgeYellow {
+  padding: 4px 10px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.badgeGreen {
+  background-color: #e6f4ea;
+  color: #137333;
+}
+
+.badgeYellow {
+  background-color: #fef7e0;
+  color: #b06000;
+}
+
+.dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: currentColor;
+}
+
+.time {
+  font-size: 0.8rem;
+  color: #adb5bd;
+}
+
+/* Bottom Widgets */
+.bottomWidgets {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1.5rem;
+}
+
+.tipsCard {
+  background-color: #2563eb; /* Biru terang */
+  color: white;
+  padding: 2rem;
+  border-radius: 16px;
+}
+
+.tipsCard h3 {
+  margin: 0 0 1rem 0;
+}
+
+.tipsCard p {
+  color: #bfdbfe;
+  line-height: 1.6;
+  margin-bottom: 1.5rem;
+  font-size: 0.95rem;
+}
+
+.outlineButton {
+  background: transparent;
+  color: white;
+  border: 1px solid rgba(255,255,255,0.4);
+  padding: 0.5rem 1.25rem;
+  border-radius: 50px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: background 0.2s;
+}
+
+.outlineButton:hover {
+  background: rgba(255,255,255,0.1);
+}
+
+.templateWidget {
+  background-color: white;
+  padding: 2rem;
+  border-radius: 16px;
+  border: 1px solid #e9ecef;
+}
+
+.templateWidget h3 {
+  margin: 0 0 1.5rem 0;
+  color: #1a1a1a;
+}
+
+.templateGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.templateItem {
+  border: 1px solid #e9ecef;
+  padding: 1rem;
+  border-radius: 12px;
+  background-color: #f8f9fa;
+}
+
+.templateItem h4 {
+  margin: 0 0 0.25rem 0;
+  color: #0d6efd;
+  font-size: 0.9rem;
+}
+
+.templateItem p {
+  margin: 0;
+  color: #868e96;
+  font-size: 0.8rem;
+}

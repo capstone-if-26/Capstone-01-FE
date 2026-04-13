@@ -1,11 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // 1. Import useRouter dari next/navigation
 import { useLogin } from "@/hooks/use-login";
 import Link from "next/link";
 import styles from "./login-form.module.css";
 
 export default function LoginForm() {
+  const router = useRouter(); // 2. Inisialisasi router
   const { submitLogin, loading } = useLogin();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
@@ -27,6 +29,10 @@ export default function LoginForm() {
 
       console.log("Login success:", res);
       alert("Login berhasil");
+      
+      // 3. Pindah ke halaman dashboard setelah alert diklik "Oke"
+      router.push("/dashboard");
+
     } catch (error) {
       console.error("Login gagal:", error);
       alert("Login gagal");
