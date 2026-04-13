@@ -13,7 +13,7 @@ export default function DashboardPage() {
       {/* Hero Section */}
       <section className={styles.heroSection}>
         <div>
-          <h1>Halo, Alex! 👋</h1>
+          <h1>Halo, Kreator! 👋</h1>
           <p>Siap untuk membuat konten AI yang luar biasa hari ini?</p>
         </div>
         <button className={styles.primaryButton}>
