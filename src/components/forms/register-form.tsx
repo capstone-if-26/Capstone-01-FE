@@ -1,12 +1,13 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation"; // Tambahkan useRouter
 import { useRegister } from "@/hooks/use-register";
 import Link from "next/link";
-// import Image from "next/image";
 import styles from "./register-form.module.css";
 
 export default function RegisterForm() {
+  const router = useRouter(); // Inisialisasi router
   const { submitRegister, loading } = useRegister();
   const [showPassword, setShowPassword] = useState(false);
   const [agreed, setAgreed] = useState(false);
@@ -30,7 +31,15 @@ export default function RegisterForm() {
         });
 
         console.log("Register success:", res);
-        // alert("Register berhasil");
+        
+        // 1. Simpan data input asli ke Local Storage
+        localStorage.setItem("registeredName", form.fullName);
+        localStorage.setItem("registeredEmail", form.email);
+        
+        // 2. Beri notifikasi dan arahkan ke dashboard
+        alert("Registrasi berhasil! Selamat datang di Sevima AI.");
+        router.push("/dashboard");
+
     } catch (error) {
         console.error("Register gagal:", error);
         alert("Register gagal");
@@ -205,7 +214,7 @@ export default function RegisterForm() {
             <button
               className={styles.btnPrimary}
               onClick={handleSubmit}
-              disabled={!agreed || loading}
+              disabled={!agreed || loading || !form.fullName || !form.email || !form.password}
             >
                 {loading ? "Loading..." : "Daftar Sekarang"}
             </button>
