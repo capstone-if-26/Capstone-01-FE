@@ -1,13 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation"; // 1. Import useRouter dari next/navigation
+import { useRouter } from "next/navigation";
 import { useLogin } from "@/hooks/use-login";
 import Link from "next/link";
 import styles from "./login-form.module.css";
 
 export default function LoginForm() {
-  const router = useRouter(); // 2. Inisialisasi router
+  const router = useRouter();
   const { submitLogin, loading } = useLogin();
   const [showPassword, setShowPassword] = useState(false);
   const [form, setForm] = useState({
@@ -28,14 +28,23 @@ export default function LoginForm() {
       });
 
       console.log("Login success:", res);
-      alert("Login berhasil");
       
-      // 3. Pindah ke halaman dashboard setelah alert diklik "Oke"
+      // 1. Simpan email ke Local Storage
+      localStorage.setItem("registeredEmail", form.email);
+      
+      // 2. Jika user ini tidak punya nama di storage, kita buatkan nama otomatis dari email-nya
+      // Contoh: "alya.rahma@sevima.com" menjadi "alya.rahma"
+      if (!localStorage.getItem("registeredName")) {
+         const fallbackName = form.email.split("@")[0];
+         localStorage.setItem("registeredName", fallbackName);
+      }
+
+      alert("Login berhasil! Selamat datang kembali.");
       router.push("/dashboard");
 
     } catch (error) {
       console.error("Login gagal:", error);
-      alert("Login gagal");
+      alert("Login gagal, periksa kembali email atau password Anda.");
     }
   };
 
@@ -177,7 +186,7 @@ export default function LoginForm() {
             <button
               className={styles.btnPrimary}
               onClick={handleSubmit}
-              disabled={loading}
+              disabled={loading || !form.email || !form.password}
             >
               {loading ? "Loading..." : "Masuk Sekarang"}
             </button>
