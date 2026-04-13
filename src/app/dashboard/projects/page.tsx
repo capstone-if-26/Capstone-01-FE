@@ -28,10 +28,9 @@ export default function NewProjectPage() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   
-  // Ref untuk elemen yang akan di-export ke PDF
   const briefRef = useRef<HTMLDivElement>(null);
 
-  // ================= STATES: BUSINESS BRIEF (Step 1) =================
+  // ================= STATES: BUSINESS BRIEF =================
   const [schoolName, setSchoolName] = useState('');
   const [eventContent, setEventContent] = useState('');
   const [schoolLevel, setSchoolLevel] = useState('');
@@ -39,25 +38,24 @@ export default function NewProjectPage() {
   const [audienceInput, setAudienceInput] = useState('');
   const [brandPersonality, setBrandPersonality] = useState('Friendly');
 
-  // ================= STATES: CONTENT BRIEF (Step 2) =================
+  // ================= STATES: CONTENT BRIEF =================
   const [marketingGoal, setMarketingGoal] = useState('');
   const [videoDuration, setVideoDuration] = useState('');
   const [keyMessage, setKeyMessage] = useState('');
   const [cta, setCta] = useState('');
   const [prompt, setPrompt] = useState('');
 
-  // ================= STATES: PILLAR & THEME (Step 3) =================
+  // ================= STATES: PILLAR & THEME =================
   const [contentPillar, setContentPillar] = useState('Educational');
   const [contentTheme, setContentTheme] = useState('Step-by-Step Tutorial');
 
-  // Efek untuk reset Theme jika Pillar berubah
   useEffect(() => {
     if (themesByPillar[contentPillar]) {
       setContentTheme(themesByPillar[contentPillar][0].id);
     }
   }, [contentPillar]);
 
-  // ================= FUNGSI TARGET AUDIENCE =================
+  // ================= FUNGSI BANTUAN TARGET AUDIENCE =================
   const handleAddAudience = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Enter' && audienceInput.trim() !== '') {
       e.preventDefault();
@@ -72,29 +70,21 @@ export default function NewProjectPage() {
     setAudiences(audiences.filter(tag => tag !== tagToRemove));
   };
 
-  // ================= FUNGSI VALIDASI & NAVIGASI =================
+  // ================= FUNGSI VALIDASI =================
   const handleNext = () => {
-    // Validasi Step 1
-    if (currentStep === 1) {
-      if (!schoolName || !eventContent || !schoolLevel || audiences.length === 0) {
-        alert("Mohon lengkapi semua data Business Brief (termasuk minimal 1 Target Audience) sebelum melanjutkan.");
-        return;
-      }
+    if (currentStep === 1 && (!schoolName || !eventContent || !schoolLevel || audiences.length === 0)) {
+      alert("Mohon lengkapi semua data Business Brief sebelum melanjutkan.");
+      return;
     }
-    // Validasi Step 2
-    if (currentStep === 2) {
-      if (!marketingGoal || !videoDuration || !keyMessage || !cta || !prompt) {
-        alert("Mohon lengkapi semua data Content Brief sebelum melanjutkan.");
-        return;
-      }
+    if (currentStep === 2 && (!marketingGoal || !videoDuration || !keyMessage || !cta || !prompt)) {
+      alert("Mohon lengkapi semua data Content Brief sebelum melanjutkan.");
+      return;
     }
-    // Lanjut jika lolos validasi
     setCurrentStep((prev) => prev + 1);
   };
 
   const prevStep = () => setCurrentStep((prev) => prev - 1);
 
-  // ================= FUNGSI GENERATE VIDEO =================
   const handleGenerate = () => {
     setIsGenerating(true);
     setTimeout(() => {
@@ -102,31 +92,44 @@ export default function NewProjectPage() {
     }, 3000);
   };
 
-  // ================= FUNGSI EXPORT PDF =================
   const handleExportPDF = async () => {
     if (!briefRef.current) return;
     try {
-      // Mengubah elemen HTML menjadi Canvas (Gambar)
       const canvas = await html2canvas(briefRef.current, { scale: 2 });
       const imgData = canvas.toDataURL('image/png');
-      
-      // Inisialisasi PDF (A4 Portrait)
       const pdf = new jsPDF('p', 'mm', 'a4');
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
-      // Memasukkan gambar ke PDF dan menyimpannya
       pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Creative_Brief_${schoolName.replace(/\s+/g, '_')}.pdf`);
+      pdf.save(`Creative_Brief_${schoolName.replace(/\s+/g, '_') || 'Project'}.pdf`);
     } catch (error) {
-      console.error("Gagal mengekspor PDF:", error);
       alert("Terjadi kesalahan saat mengekspor PDF.");
     }
   };
 
+  // ================= FUNGSI GENERATE KONTEN DINAMIS UNTUK STEP 4 =================
+  const getVisualTags = () => {
+    switch(brandPersonality) {
+      case 'Friendly': return ['Casual', 'Relatable', 'Warm', 'Bright'];
+      case 'Professional': return ['Corporate', 'Clean', 'Minimalist', 'Sleek'];
+      case 'Creative': return ['Vibrant', 'Dynamic', 'Out-of-the-box', 'Colorful'];
+      case 'Authoritative': return ['Credible', 'Structured', 'Informative', 'Formal'];
+      default: return ['Casual', 'Relatable'];
+    }
+  };
+
+  const generatedCaption = `Halo ${audiences.join(' dan ')}! Tahukah kamu bahwa ${keyMessage}? Di ${schoolName}, kami siap membantumu. Yuk, jangan sampai ketinggalan momen ${eventContent} ini. ${cta}! ✨`;
+  
+  const generatedHashtags = [
+    `#${schoolName.replace(/\s+/g, '')}`,
+    `#${eventContent.replace(/\s+/g, '')}`,
+    `#${contentTheme.replace(/\s+/g, '')}`,
+    '#SevimaAI',
+    '#Education'
+  ];
+
   return (
     <div className={styles.container}>
-      {/* POP-UP MODAL LOADING */}
       {isGenerating && (
         <div className={styles.modalOverlay}>
           <div className={styles.modalContent}>
@@ -141,14 +144,13 @@ export default function NewProjectPage() {
       <div className={styles.stepper}>
         <div className={styles.stepLine}></div>
         <div className={styles.stepLineActive} style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '33%' : currentStep === 3 ? '66%' : '100%' }}></div>
-        
         <div className={`${styles.stepItem} ${currentStep >= 1 ? styles.active : ''}`}><div className={styles.stepCircle}>1</div><span className={styles.stepText}>Business Brief</span></div>
         <div className={`${styles.stepItem} ${currentStep >= 2 ? styles.active : ''}`}><div className={styles.stepCircle}>2</div><span className={styles.stepText}>Content Brief</span></div>
         <div className={`${styles.stepItem} ${currentStep >= 3 ? styles.active : ''}`}><div className={styles.stepCircle}>3</div><span className={styles.stepText}>Content Pillar</span></div>
         <div className={`${styles.stepItem} ${currentStep >= 4 ? styles.active : ''}`}><div className={styles.stepCircle}>4</div><span className={styles.stepText}>Creative Brief</span></div>
       </div>
 
-      {/* ================= STEP 1: BUSINESS BRIEF ================= */}
+      {/* STEP 1: BUSINESS BRIEF */}
       {currentStep === 1 && (
         <div className={styles.card}>
           <h2>Business Brief</h2>
@@ -192,16 +194,8 @@ export default function NewProjectPage() {
                   {aud} <button type="button" onClick={() => removeAudience(aud)}>✕</button>
                 </div>
               ))}
-              <input 
-                type="text" 
-                className={styles.pillInput} 
-                placeholder="Ketik & tekan Enter untuk tambah"
-                value={audienceInput}
-                onChange={(e) => setAudienceInput(e.target.value)}
-                onKeyDown={handleAddAudience}
-              />
+              <input type="text" className={styles.pillInput} placeholder="Ketik & tekan Enter" value={audienceInput} onChange={(e) => setAudienceInput(e.target.value)} onKeyDown={handleAddAudience} />
             </div>
-            <small style={{color: '#6c757d', marginTop: '4px', display:'block'}}>Contoh: Siswa SMA, Orang Tua, Profesional</small>
           </div>
 
           <div className={styles.formGroup}>
@@ -215,13 +209,11 @@ export default function NewProjectPage() {
             </div>
           </div>
 
-          <div className={styles.footerActions}>
-            <button className={styles.btnPrimary} onClick={handleNext}>Lanjut ke Content Brief →</button>
-          </div>
+          <div className={styles.footerActions}><button className={styles.btnPrimary} onClick={handleNext}>Lanjut ke Content Brief →</button></div>
         </div>
       )}
 
-      {/* ================= STEP 2: CONTENT BRIEF ================= */}
+      {/* STEP 2: CONTENT BRIEF */}
       {currentStep === 2 && (
         <div className={styles.card}>
           <div className={styles.grid2}>
@@ -231,7 +223,6 @@ export default function NewProjectPage() {
                 <option value="">-- Pilih Tujuan --</option>
                 <option value="Brand Awareness">Brand Awareness</option>
                 <option value="Lead Generation (Pendaftaran)">Lead Generation (Pendaftaran)</option>
-                <option value="Engagement">Engagement & Community</option>
               </select>
             </div>
             <div className={styles.formGroup}>
@@ -240,7 +231,6 @@ export default function NewProjectPage() {
                 <option value="">-- Pilih Durasi --</option>
                 <option value="Short (15 detik)">Short (15 detik)</option>
                 <option value="Medium (30 detik)">Medium (30 detik)</option>
-                <option value="Long (60 detik)">Long (60 detik)</option>
               </select>
             </div>
           </div>
@@ -257,7 +247,7 @@ export default function NewProjectPage() {
 
           <div className={styles.formGroup}>
             <label>Specific Requirements / Prompt Tambahan <span style={{color:'red'}}>*</span></label>
-            <textarea className={styles.textarea} placeholder="Contoh: Gunakan tone suara yang ceria, masukkan elemen warna biru kampus..." value={prompt} onChange={(e) => setPrompt(e.target.value)}></textarea>
+            <textarea className={styles.textarea} placeholder="Contoh: Gunakan tone suara yang ceria..." value={prompt} onChange={(e) => setPrompt(e.target.value)}></textarea>
           </div>
 
           <div className={styles.footerActions}>
@@ -267,7 +257,7 @@ export default function NewProjectPage() {
         </div>
       )}
 
-      {/* ================= STEP 3: CONTENT PILLAR ================= */}
+      {/* STEP 3: CONTENT PILLAR */}
       {currentStep === 3 && (
         <div className={styles.card}>
           <h3 style={{marginBottom: '1rem'}}>1. Pilih Content Pillar</h3>
@@ -298,11 +288,9 @@ export default function NewProjectPage() {
         </div>
       )}
 
-      {/* ================= STEP 4: CREATIVE BRIEF (HASIL DINAMIS) ================= */}
+      {/* STEP 4: CREATIVE BRIEF (TERMASUK VISUAL & COPYWRITING) */}
       {currentStep === 4 && (
         <div className={styles.card}>
-          
-          {/* Bungkus area ini dengan ID agar mudah dibaca oleh html2canvas */}
           <div id="creative-brief-content" ref={briefRef} style={{ padding: '1rem', backgroundColor: 'white' }}>
             <h2>Creative Brief: {schoolName}</h2>
             <p className={styles.subtitle}>{marketingGoal} · {videoDuration} · Gaya: {brandPersonality} · {schoolLevel}</p>
@@ -319,15 +307,9 @@ export default function NewProjectPage() {
 
             <h4 className={styles.briefSectionTitle}>FORMAT & STYLING</h4>
             <div className={styles.grid3} style={{marginBottom: '1.5rem'}}>
-              <div className={styles.briefBox} style={{textAlign:'center', marginBottom:0}}>
-                <h5>CONTENT PILLAR</h5><p>{contentPillar}</p>
-              </div>
-              <div className={styles.briefBox} style={{textAlign:'center', marginBottom:0}}>
-                <h5>DURASI</h5><p>{videoDuration}</p>
-              </div>
-              <div className={styles.briefBox} style={{textAlign:'center', marginBottom:0}}>
-                <h5>PERSONALITY</h5><p>{brandPersonality}</p>
-              </div>
+              <div className={styles.briefBox} style={{textAlign:'center', marginBottom:0}}><h5>CONTENT PILLAR</h5><p>{contentPillar}</p></div>
+              <div className={styles.briefBox} style={{textAlign:'center', marginBottom:0}}><h5>DURASI</h5><p>{videoDuration}</p></div>
+              <div className={styles.briefBox} style={{textAlign:'center', marginBottom:0}}><h5>PERSONALITY</h5><p>{brandPersonality}</p></div>
             </div>
 
             <h4 className={styles.briefSectionTitle}>EXECUTION & FLOW</h4>
@@ -350,22 +332,41 @@ export default function NewProjectPage() {
                 <p className={styles.itemText}><b>Resolution</b> — {keyMessage}</p>
               </div>
             </div>
-
-            <div className={styles.dashedBox}>
+            <div className={styles.dashedBox} style={{marginBottom: '2rem'}}>
               <h5>CALL TO ACTION (CTA)</h5>
               <p>"{cta}"</p>
             </div>
+
+            {/* TAMBAHAN: VISUAL DIRECTION */}
+            <h4 className={styles.briefSectionTitle}>VISUAL DIRECTION</h4>
+            <div className={styles.pillContainer} style={{marginBottom: '1rem'}}>
+              {getVisualTags().map((tag) => (
+                <span key={tag} className={styles.pill} style={{border:'none', backgroundColor:'#f1f3f5', color:'#495057'}}>{tag}</span>
+              ))}
+            </div>
+            <div className={styles.briefBox}>
+              <p style={{fontWeight:'normal', fontSize:'0.9rem', color:'#495057'}}>
+                Format {videoDuration.includes('15') ? 'Shorts/Reels/TikTok' : 'Video Landscape/Portrait'}. Visual difokuskan pada gaya yang {brandPersonality.toLowerCase()}, menampilkan elemen-elemen {schoolName} yang relevan dengan {eventContent.toLowerCase()}.
+              </p>
+            </div>
+
+            {/* TAMBAHAN: COPYWRITING */}
+            <h4 className={styles.briefSectionTitle} style={{marginTop: '2rem'}}>COPYWRITING (CAPTION)</h4>
+            <p style={{color:'#495057', fontSize:'0.95rem', lineHeight:'1.6'}}>{generatedCaption}</p>
+            <div className={styles.hashtagList}>
+              {generatedHashtags.map(tag => (
+                <span key={tag} className={styles.hashtag}>{tag}</span>
+              ))}
+            </div>
+
           </div>
 
           <div className={styles.footerActions} style={{marginTop: '2rem'}}>
             <button className={styles.btnGhost} onClick={prevStep}>← Edit Data</button>
-            
-            {/* Tombol Export PDF memanggil fungsi handleExportPDF */}
             <button className={styles.btnOutline} onClick={handleExportPDF}>
                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '6px', verticalAlign: 'middle'}}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                Export PDF
             </button>
-            
             <button className={styles.btnPrimary} onClick={handleGenerate} disabled={isGenerating}>
               {isGenerating ? 'Memproses...' : 'Generate Video Assets ✨'}
             </button>
