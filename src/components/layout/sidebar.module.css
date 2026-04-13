@@ -1,0 +1,131 @@
+.sidebar {
+  width: 260px;
+  background-color: white;
+  border-right: 1px solid #e9ecef;
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 0;
+}
+
+.logoContainer {
+  padding: 0 1.5rem 2rem;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.logoIcon {
+  display: flex;
+  align-items: center;
+}
+
+.logoContainer h2 {
+  color: #1a1a1a;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.logoContainer p {
+  color: #6c757d;
+  margin: 0;
+  font-size: 0.75rem;
+}
+
+.navigation {
+  flex: 1;
+}
+
+.navigation ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+}
+
+.navigation li {
+  margin: 0.25rem 1rem;
+  border-radius: 8px;
+}
+
+.navigation li a {
+  text-decoration: none;
+  color: #495057;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 0.75rem 1rem;
+  font-weight: 500;
+  font-size: 0.95rem;
+}
+
+.navigation li:hover {
+  background-color: #f8f9fa;
+}
+
+.active {
+  background-color: #eff6ff; /* Biru sangat muda */
+}
+
+.active a {
+  color: #0d6efd;
+  font-weight: 600;
+}
+
+.userProfile {
+  padding: 1rem 1.5rem;
+  border-top: 1px solid #e9ecef;
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+}
+
+.avatar {
+  width: 40px;
+  height: 40px;
+  background-color: #ffe8cc;
+  color: #fd7e14;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+}
+
+.userInfo p {
+  margin: 0;
+}
+
+.userName {
+  font-weight: 600;
+  font-size: 0.9rem;
+  color: #212529;
+}
+
+.userPlan {
+  font-size: 0.75rem;
+  color: #868e96;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    width: 100%; /* Lebar penuh di HP */
+    border-right: none;
+    border-bottom: 1px solid #e9ecef;
+    padding: 1rem;
+  }
+  
+  .navigation ul {
+    display: flex; /* Jadikan menu berjejer horizontal bisa di-scroll */
+    overflow-x: auto;
+    padding-bottom: 0.5rem;
+  }
+  
+  .navigation li {
+    margin: 0 0.5rem 0 0;
+    white-space: nowrap; /* Jangan biarkan teks turun ke bawah */
+  }
+  
+  .userProfile {
+    display: none; /* Sembunyikan profil di sidebar HP untuk menghemat ruang */
+  }
+}
