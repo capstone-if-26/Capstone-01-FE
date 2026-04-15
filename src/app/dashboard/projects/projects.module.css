@@ -16,175 +16,50 @@
 }
 
 .stepLine {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  right: 0;
-  height: 4px;
-  background-color: #e9ecef;
-  z-index: 1;
-  transform: translateY(-50%);
-  border-radius: 2px;
+  position: absolute; top: 50%; left: 0; right: 0; height: 4px;
+  background-color: #e9ecef; z-index: 1; transform: translateY(-50%); border-radius: 2px;
 }
 
 .stepLineActive {
-  position: absolute;
-  top: 50%;
-  left: 0;
-  height: 4px;
-  background-color: #0d6efd;
-  z-index: 2;
-  transform: translateY(-50%);
-  border-radius: 2px;
-  transition: width 0.3s ease;
+  position: absolute; top: 50%; left: 0; height: 4px;
+  background-color: #0d6efd; z-index: 2; transform: translateY(-50%);
+  border-radius: 2px; transition: width 0.3s ease;
 }
 
 .stepItem {
-  position: relative;
-  z-index: 3;
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  background-color: #f8f9fa;
-  padding: 0 1rem;
+  position: relative; z-index: 3; display: flex; align-items: center;
+  gap: 0.5rem; background-color: #f8f9fa; padding: 0 1rem;
 }
 
 .stepCircle {
-  width: 28px;
-  height: 28px;
-  border-radius: 50%;
-  background-color: #e9ecef;
-  color: #6c757d;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: 600;
-  font-size: 0.85rem;
+  width: 28px; height: 28px; border-radius: 50%; background-color: #e9ecef;
+  color: #6c757d; display: flex; align-items: center; justify-content: center;
+  font-weight: 600; font-size: 0.85rem;
 }
 
-.stepItem.active .stepCircle {
-  background-color: #0d6efd;
-  color: white;
-}
-
-.stepText {
-  color: #adb5bd;
-  font-weight: 500;
-}
-
-.stepItem.active .stepText {
-  color: #212529;
-  font-weight: 600;
-}
+.stepItem.active .stepCircle { background-color: #0d6efd; color: white; }
+.stepText { color: #adb5bd; font-weight: 500; }
+.stepItem.active .stepText { color: #212529; font-weight: 600; }
 
 /* Cards & Forms */
 .card {
-  background-color: white;
-  border: 1px solid #e9ecef;
-  border-radius: 16px;
-  padding: 2.5rem;
+  background-color: white; border: 1px solid #e9ecef; border-radius: 16px; padding: 2.5rem;
 }
 
-.card h2 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.5rem;
-  color: #1a1a1a;
-}
+.card h2 { margin: 0 0 0.5rem 0; font-size: 1.5rem; color: #1a1a1a; }
+.card p.subtitle { color: #6c757d; margin-bottom: 2rem; }
 
-.card p.subtitle {
-  color: #6c757d;
-  margin-bottom: 2rem;
-}
-
-.formGroup {
-  margin-bottom: 1.5rem;
-}
-
+.formGroup { margin-bottom: 1.5rem; }
 .formGroup label {
-  display: block;
-  font-weight: 600;
-  font-size: 0.9rem;
-  margin-bottom: 0.5rem;
-  color: #212529;
+  display: block; font-weight: 600; font-size: 0.9rem; margin-bottom: 0.5rem; color: #212529;
 }
 
 .input, .select, .textarea {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #ced4da;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  color: #495057;
-  outline: none;
+  width: 100%; padding: 0.75rem 1rem; border: 1px solid #ced4da;
+  border-radius: 8px; font-size: 0.95rem; color: #495057; outline: none;
 }
-
-.input:focus, .select:focus, .textarea:focus {
-  border-color: #0d6efd;
-}
-
-.textarea {
-  min-height: 120px;
-  resize: vertical;
-}
-
-/* Target Audience Pills */
-.pillContainer { 
-  display: flex; 
-  flex-wrap: wrap; 
-  gap: 0.75rem; 
-  align-items: center; 
-}
-
-.pill { 
-  display: flex; 
-  align-items: center; 
-  gap: 0.5rem; 
-  padding: 0.4rem 1rem; 
-  border: 1px solid #0d6efd; 
-  border-radius: 50px; 
-  background-color: #eff6ff; 
-  color: #0d6efd; 
-  font-size: 0.85rem; 
-  font-weight: 500; 
-}
-
-.pill button { 
-  background: none; 
-  border: none; 
-  color: #0d6efd; 
-  cursor: pointer; 
-  padding: 0; 
-  display: flex; 
-  align-items: center; 
-  font-weight: bold;
-}
-
-.pillAdd { 
-  padding: 0.4rem 1rem; 
-  border: 1px dashed #ced4da; 
-  border-radius: 50px; 
-  background-color: transparent; 
-  color: #6c757d; 
-  font-size: 0.85rem; 
-  cursor: pointer; 
-}
-
-/* Tambahan untuk Input Manual Target Audience */
-.pillInput { 
-  padding: 0.4rem 1rem; 
-  border: 1px dashed #ced4da; 
-  border-radius: 50px; 
-  background-color: transparent; 
-  color: #495057; 
-  font-size: 0.85rem; 
-  outline: none; 
-  min-width: 200px; 
-  transition: border-color 0.2s; 
-}
-
-.pillInput:focus { 
-  border-color: #0d6efd; 
-}
+.input:focus, .select:focus, .textarea:focus { border-color: #0d6efd; }
+.textarea { min-height: 120px; resize: vertical; }
 
 /* Grids */
 .grid4 { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
@@ -192,17 +67,39 @@
 .grid2 { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
 
 .selectCard {
-  border: 1px solid #e9ecef; border-radius: 12px; padding: 1.5rem; text-align: center; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; align-items: center; gap: 0.75rem;
+  border: 1px solid #e9ecef; border-radius: 12px; padding: 1.5rem; text-align: center;
+  cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column;
+  align-items: center; gap: 0.75rem;
 }
 .selectCard:hover { border-color: #adb5bd; }
 .selectCard.selected { border-color: #0d6efd; background-color: #eff6ff; }
-.selectCard h4 { margin: 0; color: #212529; }
-.selectCard p { margin: 0; font-size: 0.8rem; color: #6c757d; }
+.selectCard h4 { margin: 0; color: #212529; font-size: 0.95rem; }
 
-.infoBox { background-color: #f8f9fa; border-radius: 12px; padding: 1.5rem; display: flex; gap: 1rem; align-items: flex-start; margin-top: 2rem; }
-.infoBoxIcon { background-color: white; width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
-.infoBoxContent h4 { margin: 0 0 0.5rem 0; }
-.infoBoxContent p { margin: 0; font-size: 0.9rem; color: #6c757d; }
+/* Dynamic Message Options */
+.messageOption {
+  border: 1.5px solid #e9ecef; border-radius: 8px; padding: 1rem; margin-bottom: 0.75rem;
+  cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 12px;
+}
+.messageOption:hover { background-color: #f8f9fa; }
+.messageSelected { border-color: #0d6efd; background-color: #eff6ff; }
+.messageSelected span { color: #0d6efd; font-weight: 600; }
+
+/* Editable Areas for Summary */
+.editableTextarea {
+  width: 100%; padding: 1rem; border: 1.5px dashed #0d6efd; border-radius: 8px;
+  background-color: #f8fbff; font-family: inherit; font-size: 0.95rem; line-height: 1.6;
+  color: #212529; outline: none; resize: vertical; min-height: 120px; transition: all 0.2s;
+}
+.editableTextarea:focus { background-color: white; border-style: solid; box-shadow: 0 0 0 3px rgba(13,110,253,0.1); }
+
+.hashtagInput {
+  width: 100%; padding: 0.75rem; border: 1.5px dashed #0d6efd; border-radius: 8px;
+  background-color: #f8fbff; color: #0d6efd; font-weight: 500; outline: none; transition: all 0.2s;
+}
+.hashtagInput:focus { background-color: white; border-style: solid; }
+
+.infoBox { background-color: #f8f9fa; border-radius: 12px; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.5rem; margin-top: 1rem; margin-bottom: 2rem; border-left: 4px solid #0d6efd; }
+.infoBox p { margin: 0; font-size: 0.95rem; color: #495057; }
 
 /* Action Buttons */
 .footerActions { display: flex; justify-content: flex-end; gap: 1rem; margin-top: 2rem; padding-top: 1.5rem; border-top: 1px solid #e9ecef; }
@@ -210,38 +107,7 @@
 .btnOutline { background-color: white; color: #212529; border: 1px solid #ced4da; padding: 0.75rem 1.5rem; border-radius: 50px; font-weight: 600; cursor: pointer; }
 .btnGhost { background-color: transparent; color: #6c757d; border: none; font-weight: 600; cursor: pointer; margin-right: auto; }
 
-/* ================= STEP 4: CREATIVE BRIEF UI ================= */
-.briefSectionTitle {
-  font-size: 0.75rem; font-weight: 700; color: #868e96; text-transform: uppercase; margin: 2rem 0 0.5rem 0; letter-spacing: 0.05em;
-}
-
-.briefBox {
-  border: 1px solid #e9ecef; border-radius: 8px; padding: 1rem 1.25rem; background-color: #f8f9fa; margin-bottom: 1rem;
-}
-.briefBox h5 { margin: 0 0 0.25rem 0; font-size: 0.75rem; color: #6c757d; text-transform: uppercase; }
-.briefBox p { margin: 0; color: #212529; font-size: 0.95rem; font-weight: 500; }
-
-.blueBox {
-  background-color: #0d6efd; color: white; border-radius: 8px; padding: 1rem 1.25rem; margin-bottom: 1.5rem;
-}
-.blueBox h5 { margin: 0 0 0.25rem 0; font-size: 0.75rem; color: #bfdbfe; text-transform: uppercase; }
-.blueBox p { margin: 0; font-size: 1.1rem; font-weight: 600; }
-
-.dashedBox {
-  border: 1.5px dashed #0d6efd; border-radius: 8px; padding: 1rem 1.25rem; background-color: #eff6ff; margin-top: 1.5rem;
-}
-.dashedBox h5 { margin: 0 0 0.25rem 0; font-size: 0.75rem; color: #0d6efd; text-transform: uppercase; }
-.dashedBox p { margin: 0; color: #0d6efd; font-size: 0.95rem; font-weight: 600; }
-
-.numberedList { display: flex; flex-direction: column; gap: 1rem; padding: 0 0.5rem; }
-.numberedItem { display: flex; align-items: flex-start; gap: 1rem; }
-.numBadge { background-color: #eff6ff; color: #0d6efd; width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; }
-.itemText { margin: 0; font-size: 0.95rem; color: #495057; }
-
-.hashtagList { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem; }
-.hashtag { color: #0d6efd; background-color: #eff6ff; padding: 0.25rem 0.75rem; border-radius: 50px; font-size: 0.85rem; font-weight: 500; }
-
-/* ================= MODAL LOADING ================= */
+/* Modal Loading */
 .modalOverlay {
   position: fixed; top: 0; left: 0; right: 0; bottom: 0; background-color: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; backdrop-filter: blur(4px);
 }
@@ -254,3 +120,6 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 .modalContent h3 { margin: 0 0 0.5rem 0; color: #1a1a1a; }
 .modalContent p { margin: 0; color: #6c757d; font-size: 0.95rem; }
+
+/* Print PDF styles */
+.briefSectionTitle { font-size: 0.75rem; font-weight: 700; color: #868e96; text-transform: uppercase; margin: 1.5rem 0 0.5rem 0; letter-spacing: 0.05em; }
