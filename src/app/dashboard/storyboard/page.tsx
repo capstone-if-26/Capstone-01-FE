@@ -1,7 +1,7 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation'; // Tambahkan useSearchParams
+import React, { useState, useEffect, Suspense } from 'react'; // 1. Import Suspense
+import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './storyboard.module.css';
 
 // Interface Data Scene
@@ -13,24 +13,23 @@ interface Scene {
 
 // Data Dummy untuk Halaman "Daftar Project" (List View)
 const mockSavedProjects = [
-  { id: '1', institutionName: 'Universitas Gadjah Mada', eventContent: 'Promosi Beasiswa', toneOfVoice: 'Profesional & Formal', selectedKeyMessage: 'Membangun kompetensi unggul.', selectedTheme: 'Keunggulan Akademik', date: '05 Okt 2025', status: 'Ready', thumbnail: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=400&q=80' },
-  { id: '2', institutionName: 'SMA Negeri 5 Surabaya', eventContent: 'Dies Natalis Sekolah', toneOfVoice: 'Kreatif & Inovatif', selectedKeyMessage: 'Wujudkan ide gilamu menjadi karya nyata.', selectedTheme: 'Tren & Gaya Hidup Cepat', date: '28 Sep 2025', status: 'Draft', thumbnail: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=400&q=80' },
+  { id: '1', institutionName: 'Universitas Gadjah Mada', eventContent: 'Promosi Beasiswa', toneOfVoice: 'Profesional & Formal', selectedKeyMessage: 'Membangun kompetensi unggul.', selectedTheme: 'Keunggulan Akademik', date: 'Kemarin', status: 'Ready' },
+  { id: '2', institutionName: 'SMA Negeri 5 Surabaya', eventContent: 'Dies Natalis Sekolah', toneOfVoice: 'Kreatif & Inovatif', selectedKeyMessage: 'Wujudkan ide gilamu menjadi karya nyata.', selectedTheme: 'Tren & Gaya Hidup Cepat', date: '3 hari yang lalu', status: 'Draft' },
 ];
 
-export default function StoryboardPage() {
+// 2. Ubah nama komponen utama menjadi StoryboardContent
+function StoryboardContent() {
   const router = useRouter();
-  const searchParams = useSearchParams(); // Membaca URL Query Parameters
+  const searchParams = useSearchParams();
 
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [projectMeta, setProjectMeta] = useState({ title: 'Memuat Project...', duration: '00:00' });
   
-  // Terdapat 3 Tampilan. Default diset null agar tidak ada 'flashing' tampilan daftar
   const [view, setView] = useState<'list' | 'storyboard' | 'output' | null>(null);
   
   const [isRendering, setIsRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
 
-  // FUNGSI UNTUK MEMBUAT SCENE BERDASARKAN DATA PROJECT
   const loadStoryboardData = (data: any) => {
     setProjectMeta({
       title: `${data.eventContent || 'Project'} - ${data.institutionName || 'Kampus'}`,
@@ -63,9 +62,7 @@ export default function StoryboardPage() {
     setScenes(dynamicScenes);
   };
 
-  // MENGATUR TAMPILAN AWAL BERDASARKAN URL QUERY PARAMS
   useEffect(() => {
-    // Mengecek apakah ada '?new=true' di URL
     const isNewProject = searchParams.get('new') === 'true';
     
     if (isNewProject) {
@@ -74,13 +71,12 @@ export default function StoryboardPage() {
         loadStoryboardData(JSON.parse(draft));
         setView('storyboard');
       } else {
-        // Fallback jika storage kosong tapi di URL dipaksa 'new'
         setView('list');
       }
     } else {
       setView('list');
     }
-  }, [searchParams]); 
+  }, [searchParams]);
 
   const toggleEditScene = (id: string) => {
     setScenes((prev) => prev.map(s => s.id === id ? { ...s, isEditing: !s.isEditing } : s));
@@ -103,7 +99,6 @@ export default function StoryboardPage() {
     }, 3000);
   };
 
-  // FUNGSI RENDER FINAL VIDEO
   const handleFinalRender = () => {
     setView('output');
     setIsRendering(true);
@@ -116,9 +111,6 @@ export default function StoryboardPage() {
     }, 400);
   };
 
-  const handleSaveToLibrary = () => router.push('/dashboard/library');
-
-  // MENAMPILKAN LOADING SEMENTARA SAMPAI VIEW DITENTUKAN OLEH USEEFFECT
   if (view === null) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh', flexDirection: 'column', gap: '1rem', color: '#6c757d' }}>
@@ -131,7 +123,6 @@ export default function StoryboardPage() {
   return (
     <div className={styles.container}>
       
-      {/* ================= TAMPILAN LIST VIEW ================= */}
       {view === 'list' && (
         <div className={styles.listContainer}>
           <div className={styles.listHeader}>
@@ -144,7 +135,6 @@ export default function StoryboardPage() {
             </button>
           </div>
 
-          {/* Filter & Search Row */}
           <div className={styles.filterRow}>
             <div className={styles.searchContainer}>
               <svg className={styles.searchIcon} width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -163,7 +153,6 @@ export default function StoryboardPage() {
           </div>
 
           <div className={styles.projectGrid}>
-            {/* Card Project dari Local Storage */}
             {localStorage.getItem('currentProjectDraft') && (
               <div className={styles.projectCard} onClick={() => {
                 loadStoryboardData(JSON.parse(localStorage.getItem('currentProjectDraft') || '{}'));
@@ -190,12 +179,11 @@ export default function StoryboardPage() {
               </div>
             )}
 
-            {/* Dummy Projects Cards */}
             {mockSavedProjects.map(proj => (
               <div key={proj.id} className={styles.projectCard}>
                 <div className={styles.cardImage}>
                   <div className={`${styles.badge} ${proj.status === 'Ready' ? styles.badgeReady : styles.badgeDraft}`}>{proj.status}</div>
-                  <img src={proj.thumbnail} alt={proj.institutionName} />
+                  <img src={proj.thumbnail || ''} alt={proj.institutionName} />
                 </div>
                 <div className={styles.cardContent}>
                   <h3>{proj.institutionName}</h3>
@@ -214,7 +202,6 @@ export default function StoryboardPage() {
               </div>
             ))}
 
-            {/* Card Create New (Placeholder) */}
             <div className={styles.newProjectCard} onClick={() => router.push('/dashboard/projects')}>
               <div className={styles.iconPlus}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -225,7 +212,6 @@ export default function StoryboardPage() {
         </div>
       )}
 
-      {/* ================= TAMPILAN STORYBOARD EDITOR ================= */}
       {view === 'storyboard' && (
         <>
           <header className={styles.headerInfo}>
@@ -241,7 +227,6 @@ export default function StoryboardPage() {
                 <div className={styles.sceneTime}>{scene.time}</div>
 
                 <div className={styles.sceneCard}>
-                  {/* KIRI: PREVIEW VISUAL */}
                   <div className={styles.previewSection}>
                     {scene.thumbnail ? (
                       <div className={styles.thumbnailWrapper}>
@@ -279,7 +264,6 @@ export default function StoryboardPage() {
                     </div>
                   </div>
 
-                  {/* KANAN: TEKS */}
                   <div className={styles.contentSection}>
                     <div className={styles.sceneTitle}>
                       <h3>{scene.title}</h3>
@@ -311,7 +295,6 @@ export default function StoryboardPage() {
         </>
       )}
 
-      {/* ================= TAMPILAN VIDEO OUTPUT ================= */}
       {view === 'output' && (
         <>
           <div className={styles.progressCard}>
@@ -343,5 +326,19 @@ export default function StoryboardPage() {
         </>
       )}
     </div>
+  );
+}
+
+// 3. Komponen Utama Membungkus StoryboardContent dengan Suspense
+export default function StoryboardPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '80vh', flexDirection: 'column', gap: '1rem', color: '#6c757d' }}>
+        <div className={styles.spinnerSmall} style={{width:'32px', height:'32px', border:'3px solid #e9ecef', borderTopColor:'#0d6efd'}}></div>
+        Memuat Modul Storyboard...
+      </div>
+    }>
+      <StoryboardContent />
+    </Suspense>
   );
 }
