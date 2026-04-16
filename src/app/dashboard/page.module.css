@@ -30,9 +30,11 @@
   border-radius: 50px;
   font-weight: 600;
   cursor: pointer;
-  display: flex;
+  display: inline-flex; 
   align-items: center;
-  gap: 8px;
+  gap: 8px; 
+  text-decoration: none; 
+  cursor: pointer;
 }
 
 /* Stats Section */

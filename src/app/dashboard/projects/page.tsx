@@ -93,7 +93,16 @@ export default function NewProjectPage() {
 
   const handleGenerate = () => {
     setIsGenerating(true);
-    setTimeout(() => router.push('/dashboard/storyboard'), 3000);
+    
+    // 1. Simpan semua data input (Creative Brief) ke Local Storage
+    const projectDraft = {
+      institutionName, offeredDegrees, eventContent, toneOfVoice, selectedKeyMessage, selectedTheme, prompt, copywriting: editableCopywriting,
+    };
+    localStorage.setItem('currentProjectDraft', JSON.stringify(projectDraft));
+
+    // 2. TAMBAHKAN QUERY PARAMETER '?new=true' SAAT PUSH ROUTER
+    // Perubahan di baris bawah ini 👇
+    setTimeout(() => router.push('/dashboard/storyboard?new=true'), 3000);
   };
 
   const handleExportPDF = async () => {
