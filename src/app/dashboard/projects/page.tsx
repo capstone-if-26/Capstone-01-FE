@@ -6,7 +6,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import styles from './projects.module.css';
 
-// Opsi Pesan Utama (Key Messages) di-generate berdasarkan Tone of Voice
+// Opsi Pesan Utama berdasarkan Tone of Voice
 const keyMessageOptions: Record<string, string[]> = {
   'Santai & Ramah': [
     "Mulai petualangan belajarmu di lingkungan yang seru dan mendukung.",
@@ -30,7 +30,6 @@ const keyMessageOptions: Record<string, string[]> = {
   ]
 };
 
-// Opsi Tema Video (Menggantikan Content Pillar)
 const videoThemes = [
   { id: 'Tur Kampus Sinematik', desc: 'Visual estetik menelusuri sudut-sudut fasilitas kampus.' },
   { id: 'Cerita Kehidupan Mahasiswa', desc: 'Fokus pada keseharian, kegiatan UKM, dan testimoni.' },
@@ -47,12 +46,15 @@ export default function NewProjectPage() {
   // ================= STATES: STEP 1 - BUSINESS BRIEF =================
   const [institutionName, setInstitutionName] = useState('');
   const [institutionHistory, setInstitutionHistory] = useState('');
-  const [offeredDegrees, setOfferedDegrees] = useState('');
+  const [offeredDegrees, setOfferedDegrees] = useState(''); // Sekarang Optional
+  const [schoolLevel, setSchoolLevel] = useState(''); // Dikembalikan: Tingkat Sekolah
 
   // ================= STATES: STEP 2 - CREATIVE BRIEF =================
   const [eventContent, setEventContent] = useState('');
   const [toneOfVoice, setToneOfVoice] = useState('Santai & Ramah');
   const [selectedKeyMessage, setSelectedKeyMessage] = useState('');
+  const [videoDuration, setVideoDuration] = useState(''); // Dikembalikan: Durasi
+  const [prompt, setPrompt] = useState(''); // Dikembalikan: Specific Prompt
 
   // ================= STATES: STEP 3 - TEMA VIDEO =================
   const [selectedTheme, setSelectedTheme] = useState('Tur Kampus Sinematik');
@@ -60,8 +62,11 @@ export default function NewProjectPage() {
   // ================= STATES: STEP 4 - SUMMARY (EDITABLE) =================
   const [editableCopywriting, setEditableCopywriting] = useState('');
   const [editableHashtags, setEditableHashtags] = useState('');
+  
+  // State untuk mode edit form di Ringkasan
+  const [isEditingCopywriting, setIsEditingCopywriting] = useState(false);
+  const [isEditingHashtags, setIsEditingHashtags] = useState(false);
 
-  // Set default copywriting & hashtag ketika user mencapai Step 4
   useEffect(() => {
     if (currentStep === 4) {
       const generatedCopy = `Halo generasi masa depan! ✨\n\nTahukah kamu bahwa ${selectedKeyMessage.toLowerCase()} Di ${institutionName}, kami siap membantumu mewujudkan impian itu.\n\nJangan lewatkan momen ${eventContent} tahun ini. Yuk, raih mimpimu bersama kami! 👇`;
@@ -73,13 +78,13 @@ export default function NewProjectPage() {
   }, [currentStep, institutionName, eventContent, selectedKeyMessage]);
 
   const handleNext = () => {
-    // Validasi Step 1
-    if (currentStep === 1 && (!institutionName || !institutionHistory || !offeredDegrees)) {
-      alert("Mohon lengkapi data Profil Institusi Anda sebelum melanjutkan."); return;
+    // Validasi Step 1 (Program Studi tidak wajib)
+    if (currentStep === 1 && (!institutionName || !institutionHistory || !schoolLevel)) {
+      alert("Mohon lengkapi Nama Institusi, Sejarah, dan Tingkat Sekolah."); return;
     }
-    // Validasi Step 2
-    if (currentStep === 2 && (!eventContent || !selectedKeyMessage)) {
-      alert("Mohon pilih Kebutuhan Konten dan satu Pesan Utama."); return;
+
+    if (currentStep === 2 && (!eventContent || !selectedKeyMessage || !videoDuration)) {
+      alert("Mohon lengkapi Kebutuhan Konten, Pesan Utama, dan Durasi Video."); return;
     }
     setCurrentStep((prev) => prev + 1);
   };
@@ -93,17 +98,13 @@ export default function NewProjectPage() {
 
   const handleExportPDF = async () => {
     if (!briefRef.current) return;
-    try {
-      const canvas = await html2canvas(briefRef.current, { scale: 2 });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`Ringkasan_Proyek_${institutionName.replace(/\s+/g, '_') || 'Kampus'}.pdf`);
-    } catch (error) {
-      alert("Terjadi kesalahan saat mengekspor PDF.");
-    }
+    const canvas = await html2canvas(briefRef.current, { scale: 2 });
+    const imgData = canvas.toDataURL('image/png');
+    const pdf = new jsPDF('p', 'mm', 'a4');
+    const pdfWidth = pdf.internal.pageSize.getWidth();
+    const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
+    pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
+    pdf.save(`Ringkasan_Proyek_${institutionName.replace(/\s+/g, '_') || 'Kampus'}.pdf`);
   };
 
   return (
@@ -121,7 +122,7 @@ export default function NewProjectPage() {
       {/* STEPPER */}
       <div className={styles.stepper}>
         <div className={styles.stepLine}></div>
-        <div className={styles.stepLineActive} style={{ width: currentStep === 1 ? '0%' : currentStep === 2 ? '33%' : currentStep === 3 ? '66%' : '100%' }}></div>
+        <div className={styles.stepLineActive} style={{ width: `${(currentStep - 1) * 33}%` }}></div>
         {['Business Brief', 'Creative Brief', 'Tema Video', 'Ringkasan'].map((step, idx) => (
           <div key={idx} className={`${styles.stepItem} ${currentStep >= idx + 1 ? styles.active : ''}`}>
             <div className={styles.stepCircle}>{idx + 1}</div>
@@ -130,7 +131,7 @@ export default function NewProjectPage() {
         ))}
       </div>
 
-      {/* STEP 1: BUSINESS BRIEF (Fokus Institusi) */}
+      {/* STEP 1: BUSINESS BRIEF */}
       {currentStep === 1 && (
         <div className={styles.card}>
           <h2>Business Brief</h2>
@@ -140,35 +141,63 @@ export default function NewProjectPage() {
             <label>Nama Institusi <span style={{color:'red'}}>*</span></label>
             <input type="text" className={styles.input} placeholder="Contoh: Universitas Brawijaya" value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} />
           </div>
+
           <div className={styles.formGroup}>
             <label>Sejarah / Latar Belakang Institusi <span style={{color:'red'}}>*</span></label>
             <textarea className={styles.textarea} placeholder="Ceritakan sejarah singkat, visi, atau misi institusi Anda..." value={institutionHistory} onChange={(e) => setInstitutionHistory(e.target.value)}></textarea>
           </div>
+
           <div className={styles.formGroup}>
-            <label>Program Studi / Gelar yang Ditawarkan <span style={{color:'red'}}>*</span></label>
-            <input type="text" className={styles.input} placeholder="Contoh: S1 Informatika, S2 Manajemen, D3 Desain..." value={offeredDegrees} onChange={(e) => setOfferedDegrees(e.target.value)} />
+            <label>Tingkat Sekolah <span style={{color:'red'}}>*</span></label>
+            <select className={styles.select} value={schoolLevel} onChange={(e) => setSchoolLevel(e.target.value)}>
+              <option value="">-- Pilih Tingkat Sekolah --</option>
+              <option value="PreSchool">PreSchool</option>
+              <option value="TK">TK</option>
+              <option value="SD">SD</option>
+              <option value="SMP">SMP</option>
+              <option value="SMA">SMA</option>
+              <option value="SMK">SMK</option>
+              <option value="Perguruan Tinggi">Perguruan Tinggi</option>
+            </select>
           </div>
+
+          <div className={styles.formGroup}>
+            <label>Program Studi / Gelar yang Ditawarkan <span style={{color:'#6c757d', fontWeight:'normal'}}>(Opsional)</span></label>
+            <input type="text" className={styles.input} placeholder="Contoh: S1 Informatika, S2 Manajemen..." value={offeredDegrees} onChange={(e) => setOfferedDegrees(e.target.value)} />
+          </div>
+
           <div className={styles.footerActions}>
             <button className={styles.btnPrimary} onClick={handleNext}>Lanjut ke Creative Brief →</button>
           </div>
         </div>
       )}
 
-      {/* STEP 2: CREATIVE BRIEF (Kebutuhan & Pesan) */}
+      {/* STEP 2: CREATIVE BRIEF */}
       {currentStep === 2 && (
         <div className={styles.card}>
           <h2>Creative Brief</h2>
           <p className={styles.subtitle}>Tentukan tujuan pemasaran dan gaya penyampaian konten.</p>
 
-          <div className={styles.formGroup}>
-            <label>Kebutuhan Konten (Event) <span style={{color:'red'}}>*</span></label>
-            <select className={styles.select} value={eventContent} onChange={(e) => setEventContent(e.target.value)}>
-              <option value="">-- Pilih Kebutuhan --</option>
-              <option value="Penerimaan Mahasiswa Baru">Penerimaan Mahasiswa Baru</option>
-              <option value="Dies Natalis / Ulang Tahun">Dies Natalis / Ulang Tahun</option>
-              <option value="Promosi Beasiswa">Promosi Beasiswa</option>
-              <option value="Pengenalan Kehidupan Kampus">Pengenalan Kehidupan Kampus (PKKMB)</option>
-            </select>
+          <div className={styles.grid2}>
+            <div className={styles.formGroup}>
+              <label>Kebutuhan Konten (Event) <span style={{color:'red'}}>*</span></label>
+              <select className={styles.select} value={eventContent} onChange={(e) => setEventContent(e.target.value)}>
+                <option value="">-- Pilih Kebutuhan --</option>
+                <option value="Penerimaan Mahasiswa Baru">Penerimaan Mahasiswa Baru</option>
+                <option value="Dies Natalis / Ulang Tahun">Dies Natalis / Ulang Tahun</option>
+                <option value="Promosi Beasiswa">Promosi Beasiswa</option>
+                <option value="Pengenalan Kehidupan Kampus">Pengenalan Kehidupan Kampus (PKKMB)</option>
+              </select>
+            </div>
+            <div className={styles.formGroup}>
+              <label>Durasi Video <span style={{color:'red'}}>*</span></label>
+              <select className={styles.select} value={videoDuration} onChange={(e) => setVideoDuration(e.target.value)}>
+                <option value="">-- Pilih Durasi --</option>
+                <option value="Short (15 detik)">Short (15 detik)</option>
+                <option value="Medium (30 detik)">Medium (30 detik)</option>
+                <option value="Long (60 detik)">Long (60 detik)</option>
+              </select>
+            </div>
           </div>
           
           <div className={styles.formGroup}>
@@ -184,13 +213,18 @@ export default function NewProjectPage() {
 
           <div className={styles.formGroup}>
             <label>Pilihan Pesan Utama (Key Message) <span style={{color:'red'}}>*</span></label>
-            <p style={{fontSize: '0.85rem', color: '#6c757d', marginBottom: '0.75rem'}}>Pilih salah satu pesan yang paling sesuai dengan target audiens Anda (Dibuat berdasarkan Tone of Voice):</p>
+            <p style={{fontSize: '0.85rem', color: '#6c757d', marginBottom: '0.75rem'}}>Pilih salah satu pesan yang paling sesuai dengan target audiens Anda:</p>
             {keyMessageOptions[toneOfVoice].map((msg, i) => (
               <div key={i} className={`${styles.messageOption} ${selectedKeyMessage === msg ? styles.messageSelected : ''}`} onClick={() => setSelectedKeyMessage(msg)}>
                 <input type="radio" checked={selectedKeyMessage === msg} readOnly />
                 <span>{msg}</span>
               </div>
             ))}
+          </div>
+
+          <div className={styles.formGroup}>
+            <label>Specific Requirements / Prompt Tambahan <span style={{color:'#6c757d', fontWeight:'normal'}}>(Opsional)</span></label>
+            <textarea className={styles.textarea} placeholder="Contoh: Gunakan backsound yang energik, fokuskan visual pada fasilitas gedung A..." value={prompt} onChange={(e) => setPrompt(e.target.value)}></textarea>
           </div>
 
           <div className={styles.footerActions}>
@@ -200,7 +234,7 @@ export default function NewProjectPage() {
         </div>
       )}
 
-      {/* STEP 3: TEMA VIDEO (Dulu Content Pillar) */}
+      {/* STEP 3: TEMA VIDEO */}
       {currentStep === 3 && (
         <div className={styles.card}>
           <h2>Pilih Tema Video</h2>
@@ -222,44 +256,62 @@ export default function NewProjectPage() {
         </div>
       )}
 
-      {/* STEP 4: SUMMARY (Ringkasan & Editable Text) */}
+      {/* STEP 4: SUMMARY DENGAN TOGGLE EDIT */}
       {currentStep === 4 && (
         <div className={styles.card}>
           <div ref={briefRef} style={{backgroundColor: 'white', padding: '10px'}}>
             <h2 style={{margin: '0 0 0.5rem 0'}}>Ringkasan Proyek</h2>
-            <p className={styles.subtitle}>Tinjau kembali dan sesuaikan teks copywriting sebelum diproses AI.</p>
+            <p className={styles.subtitle}>Tinjau kembali konten Anda sebelum diproses oleh AI.</p>
             
             <div className={styles.infoBox}>
-              <p><b>Institusi:</b> {institutionName} ({offeredDegrees})</p>
-              <p><b>Kebutuhan:</b> {eventContent}</p>
-              <p><b>Tone of Voice:</b> {toneOfVoice}</p>
-              <p><b>Tema Visual:</b> {selectedTheme}</p>
+              <p><b>Institusi:</b> {institutionName} - {schoolLevel} {offeredDegrees ? `(${offeredDegrees})` : ''}</p>
+              <p><b>Kebutuhan:</b> {eventContent} ({videoDuration})</p>
+              <p><b>Tema & Gaya:</b> {selectedTheme} / {toneOfVoice}</p>
               <p><b>Pesan Utama:</b> "{selectedKeyMessage}"</p>
+              <p><b>Instruksi Tambahan:</b> {prompt}</p>
             </div>
 
-            <h4 className={styles.briefSectionTitle}>COPYWRITING CAPTION (DAPAT DIEDIT)</h4>
-            <textarea 
-              className={styles.editableTextarea} 
-              value={editableCopywriting} 
-              onChange={(e) => setEditableCopywriting(e.target.value)}
-              placeholder="Ketik deskripsi atau caption video di sini..."
-            ></textarea>
-
-            <h4 className={styles.briefSectionTitle}>HASHTAGS (DAPAT DIEDIT)</h4>
-            <input 
-              type="text" 
-              className={styles.hashtagInput} 
-              value={editableHashtags} 
-              onChange={(e) => setEditableHashtags(e.target.value)} 
-              placeholder="#Kampus #Pendidikan ..."
-            />
+            {/* EDITABLE COPYWRITING */}
+            <div className={styles.editHeader}>
+              <h4>COPYWRITING CAPTION</h4>
+              {!isEditingCopywriting && (
+                <button className={styles.btnEdit} onClick={() => setIsEditingCopywriting(true)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg> Edit
+                </button>
+              )}
+            </div>
             
-            <div style={{marginTop: '1rem'}}>
-              <small style={{color: '#868e96'}}>* Teks di atas akan digunakan sebagai panduan utama penyusunan skrip dan caption.</small>
+            {isEditingCopywriting ? (
+              <div>
+                <textarea className={styles.editableTextarea} value={editableCopywriting} onChange={(e) => setEditableCopywriting(e.target.value)}></textarea>
+                <button className={styles.btnSaveEdit} onClick={() => setIsEditingCopywriting(false)}>✓ Selesai</button>
+              </div>
+            ) : (
+              <div className={styles.textDisplay}>{editableCopywriting}</div>
+            )}
+
+            {/* EDITABLE HASHTAGS */}
+            <div className={styles.editHeader} style={{marginTop: '2rem'}}>
+              <h4>HASHTAGS</h4>
+              {!isEditingHashtags && (
+                <button className={styles.btnEdit} onClick={() => setIsEditingHashtags(true)}>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg> Edit
+                </button>
+              )}
             </div>
+
+            {isEditingHashtags ? (
+              <div>
+                <input type="text" className={styles.hashtagInput} value={editableHashtags} onChange={(e) => setEditableHashtags(e.target.value)} />
+                <button className={styles.btnSaveEdit} onClick={() => setIsEditingHashtags(false)}>✓ Selesai</button>
+              </div>
+            ) : (
+              <div className={styles.textDisplay} style={{color: '#0d6efd', fontWeight: 500}}>{editableHashtags}</div>
+            )}
+            
           </div>
 
-          <div className={styles.footerActions} style={{marginTop: '2rem'}}>
+          <div className={styles.footerActions} style={{marginTop: '3rem'}}>
             <button className={styles.btnGhost} onClick={prevStep}>← Edit Tema</button>
             <button className={styles.btnOutline} onClick={handleExportPDF}>
                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '6px', verticalAlign: 'middle'}}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
