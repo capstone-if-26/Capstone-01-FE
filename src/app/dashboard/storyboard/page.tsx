@@ -12,9 +12,30 @@ interface Scene {
 }
 
 // Data Dummy untuk Halaman "Daftar Project" (List View)
+// Data Dummy untuk Halaman "Daftar Project" (List View)
 const mockSavedProjects = [
-  { id: '1', institutionName: 'Universitas Gadjah Mada', eventContent: 'Promosi Beasiswa', toneOfVoice: 'Profesional & Formal', selectedKeyMessage: 'Membangun kompetensi unggul.', selectedTheme: 'Keunggulan Akademik', date: 'Kemarin', status: 'Ready' },
-  { id: '2', institutionName: 'SMA Negeri 5 Surabaya', eventContent: 'Dies Natalis Sekolah', toneOfVoice: 'Kreatif & Inovatif', selectedKeyMessage: 'Wujudkan ide gilamu menjadi karya nyata.', selectedTheme: 'Tren & Gaya Hidup Cepat', date: '3 hari yang lalu', status: 'Draft' },
+  { 
+    id: '1', 
+    institutionName: 'Universitas Gadjah Mada', 
+    eventContent: 'Promosi Beasiswa', 
+    toneOfVoice: 'Profesional & Formal', 
+    selectedKeyMessage: 'Membangun kompetensi unggul.', 
+    selectedTheme: 'Keunggulan Akademik', 
+    date: 'Kemarin', 
+    status: 'Ready',
+    thumbnail: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=400&q=80'
+  },
+  { 
+    id: '2', 
+    institutionName: 'SMA Negeri 5 Surabaya', 
+    eventContent: 'Dies Natalis Sekolah', 
+    toneOfVoice: 'Kreatif & Inovatif', 
+    selectedKeyMessage: 'Wujudkan ide gilamu menjadi karya nyata.', 
+    selectedTheme: 'Tren & Gaya Hidup Cepat', 
+    date: '3 hari yang lalu', 
+    status: 'Draft',
+    thumbnail: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=400&q=80'
+  },
 ];
 
 // 2. Ubah nama komponen utama menjadi StoryboardContent
