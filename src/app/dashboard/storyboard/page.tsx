@@ -1,44 +1,32 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from 'react'; // 1. Import Suspense
+import React, { useState, useEffect, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import styles from './storyboard.module.css';
 
-// Interface Data Scene
+// Interface Data Scene (isGeneratingVisual dihapus karena sudah tidak pakai gambar)
 interface Scene {
   id: string; time: string; title: string; duration: string; status: string;
   narration: string; visual: string; thumbnail: string | null;
-  isEditing: boolean; isGeneratingVisual: boolean;
+  isEditing: boolean;
 }
 
 // Data Dummy untuk Halaman "Daftar Project" (List View)
-// Data Dummy untuk Halaman "Daftar Project" (List View)
 const mockSavedProjects = [
   { 
-    id: '1', 
-    institutionName: 'Universitas Gadjah Mada', 
-    eventContent: 'Promosi Beasiswa', 
-    toneOfVoice: 'Profesional & Formal', 
-    selectedKeyMessage: 'Membangun kompetensi unggul.', 
-    selectedTheme: 'Keunggulan Akademik', 
-    date: 'Kemarin', 
-    status: 'Ready',
+    id: '1', institutionName: 'Universitas Gadjah Mada', eventContent: 'Promosi Beasiswa', 
+    toneOfVoice: 'Profesional & Formal', selectedKeyMessage: 'Membangun kompetensi unggul.', 
+    selectedTheme: 'Keunggulan Akademik', date: 'Kemarin', status: 'Ready',
     thumbnail: 'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=400&q=80'
   },
   { 
-    id: '2', 
-    institutionName: 'SMA Negeri 5 Surabaya', 
-    eventContent: 'Dies Natalis Sekolah', 
-    toneOfVoice: 'Kreatif & Inovatif', 
-    selectedKeyMessage: 'Wujudkan ide gilamu menjadi karya nyata.', 
-    selectedTheme: 'Tren & Gaya Hidup Cepat', 
-    date: '3 hari yang lalu', 
-    status: 'Draft',
+    id: '2', institutionName: 'SMA Negeri 5 Surabaya', eventContent: 'Dies Natalis Sekolah', 
+    toneOfVoice: 'Kreatif & Inovatif', selectedKeyMessage: 'Wujudkan ide gilamu menjadi karya nyata.', 
+    selectedTheme: 'Tren & Gaya Hidup Cepat', date: '3 hari yang lalu', status: 'Draft',
     thumbnail: 'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=400&q=80'
   },
 ];
 
-// 2. Ubah nama komponen utama menjadi StoryboardContent
 function StoryboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -62,22 +50,19 @@ function StoryboardContent() {
         id: '01', time: '00:00:00', title: '1. Intro & Hook', duration: '00:15', status: 'Ready',
         narration: `"Halo generasi masa depan! Tahukah kamu bahwa ${data.selectedKeyMessage?.toLowerCase() || 'pendidikan itu penting'}"`,
         visual: `Visual bergaya ${data.toneOfVoice || 'Santai'}. Menampilkan gerbang utama atau landmark ikonik ${data.institutionName || 'kampus'}. Sesuai instruksi: ${data.prompt || 'Buat semenarik mungkin'}.`,
-        thumbnail: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=400&q=80',
-        isEditing: false, isGeneratingVisual: false
+        thumbnail: null, isEditing: false
       },
       {
         id: '02', time: '00:00:15', title: '2. Suasana & Keunggulan Kampus', duration: '00:20', status: 'Ready',
         narration: `"Di ${data.institutionName || 'sini'}, kami siap membantumu mewujudkan impian itu melalui program unggulan kami."`,
         visual: `Gaya visual: ${data.selectedTheme || 'Sinematik'}. Memperlihatkan mahasiswa sedang beraktivitas, fasilitas modern, dan suasana belajar yang interaktif di dalam kampus.`,
-        thumbnail: 'https://images.unsplash.com/photo-1522202176988-66273c2fd55f?auto=format&fit=crop&w=400&q=80',
-        isEditing: false, isGeneratingVisual: false
+        thumbnail: null, isEditing: false
       },
       {
-        id: '03', time: '00:00:35', title: '3. Promosi & Call to Action', duration: '00:10', status: 'Asset Required',
+        id: '03', time: '00:00:35', title: '3. Promosi & Call to Action', duration: '00:10', status: 'Ready',
         narration: `"Jangan lewatkan momen ${data.eventContent || 'pendaftaran'} tahun ini. Yuk, raih mimpimu bersama kami!"`,
         visual: `Logo ${data.institutionName || 'kampus'} muncul di tengah layar dengan teks ajakan (Call to Action). Animasi grafis dinamis menutup video.`,
-        thumbnail: null,
-        isEditing: false, isGeneratingVisual: false
+        thumbnail: null, isEditing: false
       }
     ];
     setScenes(dynamicScenes);
@@ -107,19 +92,6 @@ function StoryboardContent() {
     setScenes((prev) => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
   };
 
-  const handleRegenerateVisual = (id: string) => {
-    setScenes((prev) => prev.map(s => s.id === id ? { ...s, isGeneratingVisual: true } : s));
-    setTimeout(() => {
-      const randomImages = [
-        'https://images.unsplash.com/photo-1523050854058-8df90110c9f1?auto=format&fit=crop&w=400&q=80',
-        'https://images.unsplash.com/photo-1509062522246-3755977927d7?auto=format&fit=crop&w=400&q=80',
-        'https://images.unsplash.com/photo-1546410531-ea4cea4740db?auto=format&fit=crop&w=400&q=80',
-      ];
-      const newImage = randomImages[Math.floor(Math.random() * randomImages.length)];
-      setScenes((prev) => prev.map(s => s.id === id ? { ...s, thumbnail: newImage, isGeneratingVisual: false, status: 'Ready' } : s));
-    }, 3000);
-  };
-
   const handleFinalRender = () => {
     setView('output');
     setIsRendering(true);
@@ -144,6 +116,7 @@ function StoryboardContent() {
   return (
     <div className={styles.container}>
       
+      {/* ================= TAMPILAN LIST VIEW ================= */}
       {view === 'list' && (
         <div className={styles.listContainer}>
           <div className={styles.listHeader}>
@@ -174,55 +147,57 @@ function StoryboardContent() {
           </div>
 
           <div className={styles.projectGrid}>
-            {localStorage.getItem('currentProjectDraft') && (
+            {/* Card Project dari Local Storage */}
+            {localStorage.getItem('currentProjectDraft') && (() => {
+              const draft = JSON.parse(localStorage.getItem('currentProjectDraft') || '{}');
+              return (
               <div className={styles.projectCard} onClick={() => {
-                loadStoryboardData(JSON.parse(localStorage.getItem('currentProjectDraft') || '{}'));
+                loadStoryboardData(draft);
                 setView('storyboard');
               }}>
-                <div className={styles.cardImage}>
+                <div className={styles.cardHeader}>
                   <div className={`${styles.badge} ${styles.badgeWorking}`}>Sedang Dikerjakan</div>
-                  <img src="https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=400&q=80" alt="Cover" />
+                  <button className={styles.moreBtn} onClick={(e) => e.stopPropagation()}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                  </button>
                 </div>
                 <div className={styles.cardContent}>
-                  <h3>{JSON.parse(localStorage.getItem('currentProjectDraft') || '{}').institutionName || 'Project Saya'}</h3>
-                  <p>{JSON.parse(localStorage.getItem('currentProjectDraft') || '{}').eventContent || 'Event'}</p>
-                  
-                  <div className={styles.cardFooter}>
-                    <span className={styles.dateText}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                      Hari ini
-                    </span>
-                    <button className={styles.moreBtn} onClick={(e) => e.stopPropagation()}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                    </button>
-                  </div>
+                  <h3>{draft.institutionName || 'Project Saya'}</h3>
+                  <p>📍 {draft.eventContent || 'Event'}</p>
+                </div>
+                <div className={styles.cardFooter}>
+                  <span className={styles.dateText}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    Hari ini
+                  </span>
                 </div>
               </div>
-            )}
+              );
+            })()}
 
+            {/* Dummy Projects Cards */}
             {mockSavedProjects.map(proj => (
               <div key={proj.id} className={styles.projectCard}>
-                <div className={styles.cardImage}>
+                <div className={styles.cardHeader}>
                   <div className={`${styles.badge} ${proj.status === 'Ready' ? styles.badgeReady : styles.badgeDraft}`}>{proj.status}</div>
-                  <img src={proj.thumbnail || ''} alt={proj.institutionName} />
+                  <button className={styles.moreBtn}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
+                  </button>
                 </div>
                 <div className={styles.cardContent}>
                   <h3>{proj.institutionName}</h3>
-                  <p>{proj.eventContent}</p>
-                  
-                  <div className={styles.cardFooter}>
-                    <span className={styles.dateText}>
-                      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                      {proj.date}
-                    </span>
-                    <button className={styles.moreBtn}>
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><circle cx="12" cy="12" r="1"></circle><circle cx="12" cy="5" r="1"></circle><circle cx="12" cy="19" r="1"></circle></svg>
-                    </button>
-                  </div>
+                  <p>📍 {proj.eventContent}</p>
+                </div>
+                <div className={styles.cardFooter}>
+                  <span className={styles.dateText}>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
+                    {proj.date}
+                  </span>
                 </div>
               </div>
             ))}
 
+            {/* Card Create New */}
             <div className={styles.newProjectCard} onClick={() => router.push('/dashboard/projects')}>
               <div className={styles.iconPlus}>
                 <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
@@ -233,6 +208,7 @@ function StoryboardContent() {
         </div>
       )}
 
+      {/* ================= TAMPILAN STORYBOARD EDITOR ================= */}
       {view === 'storyboard' && (
         <>
           <header className={styles.headerInfo}>
@@ -248,49 +224,29 @@ function StoryboardContent() {
                 <div className={styles.sceneTime}>{scene.time}</div>
 
                 <div className={styles.sceneCard}>
-                  <div className={styles.previewSection}>
-                    {scene.thumbnail ? (
-                      <div className={styles.thumbnailWrapper}>
-                        {scene.isGeneratingVisual && (
-                          <div className={styles.loadingOverlay}>
-                            <div className={styles.spinnerSmall}></div>Membuat Aset...
-                          </div>
-                        )}
-                        <img src={scene.thumbnail} alt={scene.title} />
-                        <div className={styles.playOverlay}>▶</div>
-                        <span className={styles.sceneDuration}>{scene.duration}</span>
+                  {/* PREVIEW GAMBAR DIHAPUS, SEKARANG HANYA TEKS YANG MEMENUHI KOTAK */}
+                  <div className={styles.contentSection} style={{ width: '100%', display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    
+                    {/* Header Scene + Tombol Edit */}
+                    <div className={styles.sceneTitle} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <h3>{scene.title}</h3>
+                        {scene.status === 'Ready' && <span style={{color: '#0d6efd'}}>✓</span>}
                       </div>
-                    ) : (
-                      <div className={`${styles.thumbnailWrapper} ${styles.assetRequired}`}>
-                        {scene.isGeneratingVisual ? (
-                           <div className={styles.loadingOverlay}><div className={styles.spinnerSmall}></div>Membuat Aset...</div>
+
+                      <div className={styles.cardActions} style={{ margin: 0 }}>
+                        {scene.isEditing ? (
+                          <button className={styles.btnActionSave} onClick={() => toggleEditScene(scene.id)}>✓ Simpan Teks</button>
                         ) : (
-                          <><svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><path d="M21 15l-5-5L5 21"/></svg> ASSET REQUIRED</>
+                          <button className={styles.btnAction} onClick={() => toggleEditScene(scene.id)}>
+                              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
+                              Edit Teks
+                          </button>
                         )}
                       </div>
-                    )}
-
-                    <div className={styles.cardActions}>
-                      {scene.isEditing ? (
-                        <button className={styles.btnActionSave} onClick={() => toggleEditScene(scene.id)}>✓ Simpan Teks</button>
-                      ) : (
-                        <button className={styles.btnAction} onClick={() => toggleEditScene(scene.id)}>
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-                            Edit Teks
-                        </button>
-                      )}
-                      <button className={styles.btnActionGenerate} onClick={() => handleRegenerateVisual(scene.id)} disabled={scene.isGeneratingVisual || scene.isEditing}>
-                        {scene.isGeneratingVisual ? '⏳ Memproses...' : '✨ Re-generate Visual'}
-                      </button>
-                    </div>
-                  </div>
-
-                  <div className={styles.contentSection}>
-                    <div className={styles.sceneTitle}>
-                      <h3>{scene.title}</h3>
-                      {scene.status === 'Ready' && <span style={{color: '#0d6efd'}}>✓</span>}
                     </div>
 
+                    {/* Area Teks Narasi */}
                     <div className={styles.sectionLabel}>AI NARRATION (SULIH SUARA)</div>
                     {scene.isEditing ? (
                       <textarea className={`${styles.editArea} ${styles.editAreaNarrative}`} value={scene.narration} onChange={(e) => handleSceneChange(scene.id, 'narration', e.target.value)} />
@@ -298,12 +254,14 @@ function StoryboardContent() {
                       <p className={styles.narrationText}>{scene.narration}</p>
                     )}
 
+                    {/* Area Teks Visual */}
                     <div className={styles.sectionLabel}>VISUAL PROMPT (ARAHAN VISUAL)</div>
                     {scene.isEditing ? (
                       <textarea className={`${styles.editArea} ${styles.editAreaVisual}`} value={scene.visual} onChange={(e) => handleSceneChange(scene.id, 'visual', e.target.value)} />
                     ) : (
                       <p className={styles.visualDescription}>{scene.visual}</p>
                     )}
+                    
                   </div>
                 </div>
               </div>
@@ -316,6 +274,7 @@ function StoryboardContent() {
         </>
       )}
 
+      {/* ================= TAMPILAN VIDEO OUTPUT ================= */}
       {view === 'output' && (
         <>
           <div className={styles.progressCard}>
@@ -324,7 +283,7 @@ function StoryboardContent() {
             </div>
             <div className={styles.progressInfo}>
               <h3>{isRendering ? 'AI sedang meramu video Anda...' : 'Video Berhasil Dibuat!'}</h3>
-              <p>{isRendering ? 'Menggabungkan aset visual dan voiceover...' : 'Video marketing Anda siap.'}</p>
+              <p>{isRendering ? 'Menggabungkan aset visual dan voiceover berdasarkan teks...' : 'Video marketing Anda siap.'}</p>
               <div className={styles.progressBarWrapper}>
                 <div className={styles.progressBar}><div className={styles.progressFill} style={{width: `${renderProgress}%`}}></div></div>
                 <span style={{fontSize: '0.8rem', fontWeight: 600}}>{renderProgress}%</span>
@@ -350,7 +309,7 @@ function StoryboardContent() {
   );
 }
 
-// 3. Komponen Utama Membungkus StoryboardContent dengan Suspense
+// Komponen Utama Membungkus dengan Suspense
 export default function StoryboardPage() {
   return (
     <Suspense fallback={

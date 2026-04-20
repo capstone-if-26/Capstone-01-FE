@@ -99,28 +99,31 @@
 /* Grid Project Card */
 .projectGrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1.5rem; }
 
-.projectCard { background: white; border: 1px solid #e9ecef; border-radius: 12px; overflow: hidden; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; }
+/* Desain Card Tanpa Gambar (Full Text) */
+.projectCard { background: white; border: 1px solid #e9ecef; border-radius: 12px; padding: 1.5rem; cursor: pointer; transition: all 0.2s; display: flex; flex-direction: column; min-height: 200px; }
 .projectCard:hover { border-color: #ced4da; box-shadow: 0 8px 24px rgba(0,0,0,0.06); transform: translateY(-3px); }
 
-/* Card Image & Badge */
-.cardImage { width: 100%; height: 160px; background-color: #e9ecef; position: relative; }
-.cardImage img { width: 100%; height: 100%; object-fit: cover; }
-.badge { position: absolute; top: 12px; left: 12px; padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+/* Header Card: Posisi Badge dan Tombol Titik Tiga */
+.cardHeader { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1rem; }
+
+.badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: white; }
 .badgeDraft { background-color: #f59f00; } /* Orange */
 .badgeReady { background-color: #0d6efd; } /* Blue */
-.badgeWorking { background-color: #20c997; } /* Green/Teal */
+.badgeWorking { background-color: #20c997; } /* Green */
 
-/* Card Info */
-.cardContent { padding: 1.25rem; display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
-.cardContent h3 { margin: 0; color: #212529; font-size: 1.05rem; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cardContent p { margin: 0; color: #6c757d; font-size: 0.85rem; display: flex; align-items: center; gap: 6px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.cardFooter { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 1rem; border-top: 1px solid #f8f9fa; }
+/* Konten Teks */
+.cardContent { display: flex; flex-direction: column; gap: 0.5rem; flex: 1; }
+.cardContent h3 { margin: 0; color: #212529; font-size: 1.15rem; font-weight: 600; line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.cardContent p { margin: 0; color: #6c757d; font-size: 0.9rem; display: flex; align-items: center; gap: 6px; }
+
+/* Footer Card: Tanggal */
+.cardFooter { display: flex; justify-content: space-between; align-items: center; margin-top: auto; padding-top: 1.5rem; border-top: 1px solid #f8f9fa; }
 .dateText { font-size: 0.8rem; color: #adb5bd; display: flex; align-items: center; gap: 6px; font-weight: 500; }
-.moreBtn { color: #adb5bd; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; }
+.moreBtn { color: #adb5bd; background: none; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 4px; border-radius: 4px; transition: 0.2s; }
 .moreBtn:hover { color: #495057; background-color: #f8f9fa; }
 
 /* Create New Card */
-.newProjectCard { border: 2px dashed #ced4da; border-radius: 12px; background-color: #f8f9fa; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; cursor: pointer; transition: all 0.2s; min-height: 260px; color: #6c757d; }
+.newProjectCard { border: 2px dashed #ced4da; border-radius: 12px; background-color: #f8f9fa; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 1rem; cursor: pointer; transition: all 0.2s; min-height: 200px; color: #6c757d; }
 .newProjectCard:hover { border-color: #0d6efd; color: #0d6efd; background-color: #f0f7ff; }
 .iconPlus { width: 48px; height: 48px; background-color: white; border-radius: 50%; display: flex; align-items: center; justify-content: center; box-shadow: 0 2px 8px rgba(0,0,0,0.05); transition: transform 0.2s; }
 .newProjectCard:hover .iconPlus { transform: scale(1.05); }
