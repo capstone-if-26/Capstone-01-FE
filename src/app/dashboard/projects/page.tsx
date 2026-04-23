@@ -49,6 +49,165 @@ export default function NewProjectPage() {
   const [offeredDegrees, setOfferedDegrees] = useState(''); // Sekarang Optional
   const [schoolLevel, setSchoolLevel] = useState(''); // Dikembalikan: Tingkat Sekolah
 
+  const [file, setFile] = useState<File | null>(null);
+  const [preview, setPreview] = useState<string | null>(null);
+  const [base64, setBase64] = useState<string>("");
+  const [pdfText, setPdfText] = useState("");
+
+  // Separate states for logo and environment images
+  const [logoFile, setLogoFile] = useState<File | null>(null);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
+  const [logoBase64, setLogoBase64] = useState<string>("");
+
+  const [envFile, setEnvFile] = useState<File | null>(null);
+  const [envPreview, setEnvPreview] = useState<string | null>(null);
+  const [envBase64, setEnvBase64] = useState<string>("");
+
+  const normalizeText = (text: string) => text.replace(/\r\n/g, '\n').replace(/\t/g, ' ').replace(/ +/g, ' ').trim();
+
+  const parseLabelLine = (line: string) => {
+    const split = line.split(/[:\-–—]/);
+    return split.length > 1 ? split.slice(1).join('').trim() : line.trim();
+  };
+
+  const extractProjectFields = (text: string) => {
+    const normalized = normalizeText(text);
+    const lines = normalized.split('\n').map((line) => line.trim()).filter(Boolean);
+
+    const findLine = (keywords: string[]) => lines.find((line) =>
+      keywords.some((keyword) => line.toLowerCase().includes(keyword))
+    );
+
+    const institutionLine = findLine(['nama institusi', 'nama kampus', 'kampus', 'universitas', 'institut', 'politeknik', 'akademi', 'sekolah tinggi']);
+    const historyLine = findLine(['sejarah', 'latar belakang', 'asal usul', 'berdiri', 'didirikan']);
+    const degreeLine = findLine(['program studi', 'prodi', 'fakultas', 'jurusan', 's1', 's2', 's3', 'd3', 'd4']);
+
+    const extractedInstitution = institutionLine ? parseLabelLine(institutionLine) : '';
+    const extractedHistory = historyLine ? parseLabelLine(historyLine) : '';
+    const extractedDegrees = degreeLine ? parseLabelLine(degreeLine) : '';
+
+    if (!institutionName && extractedInstitution) setInstitutionName(extractedInstitution);
+    if (!institutionHistory && extractedHistory) setInstitutionHistory(extractedHistory);
+    if (!offeredDegrees && extractedDegrees) setOfferedDegrees(extractedDegrees);
+  };
+
+  const extractDocxText = async (file: File) => {
+    const arrayBuffer = await file.arrayBuffer();
+    const JSZipModule = await import('jszip');
+    const JSZip = JSZipModule.default;
+    const zip = await JSZip.loadAsync(arrayBuffer);
+    const documentXml = zip.file('word/document.xml');
+    if (!documentXml) return '';
+    const xmlText = await documentXml.async('string');
+    const parser = new DOMParser();
+    const xmlDoc = parser.parseFromString(xmlText, 'application/xml');
+    const textNodes = Array.from(xmlDoc.getElementsByTagName('w:t')).map((node) => node.textContent || '');
+    return textNodes.join(' ');
+  };
+
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile) return;
+
+    setFile(selectedFile);
+    setPreview(null);
+
+    const fileName = selectedFile.name.toLowerCase();
+
+    if (selectedFile.type.startsWith('image/')) {
+      const reader = new FileReader();
+
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setBase64(reader.result);
+          setPreview(reader.result);
+        }
+      };
+
+      reader.readAsDataURL(selectedFile);
+      return;
+    }
+
+    if (selectedFile.type === 'application/pdf' || fileName.endsWith('.pdf')) {
+      const reader = new FileReader();
+
+      reader.onload = async function () {
+        const typedarray = new Uint8Array(this.result as ArrayBuffer);
+
+        const pdfjsLib = await import('pdfjs-dist');
+        const pdf = await pdfjsLib.getDocument(typedarray).promise;
+
+        let text = '';
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const strings = content.items.map((item) => {
+            if ('str' in item) return item.str;
+            return '';
+          });
+          text += strings.join(' ') + '\n';
+        }
+
+        setPdfText(text);
+        extractProjectFields(text);
+      };
+
+      reader.readAsArrayBuffer(selectedFile);
+      return;
+    }
+
+    if (selectedFile.type === 'text/plain' || fileName.endsWith('.txt')) {
+      const text = await selectedFile.text();
+      setPdfText(text);
+      extractProjectFields(text);
+      return;
+    }
+
+    if (fileName.endsWith('.docx') || selectedFile.type === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document') {
+      const text = await extractDocxText(selectedFile);
+      setPdfText(text);
+      extractProjectFields(text);
+      return;
+    }
+
+    if (fileName.endsWith('.doc') || selectedFile.type === 'application/msword') {
+      alert('Format .doc belum didukung. Silakan unggah .docx, .pdf, atau .txt.');
+      return;
+    }
+
+    alert('Format file tidak didukung. Silakan unggah .docx, .pdf, .txt, atau gambar.');
+  };
+
+  const handleLogoChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile || !selectedFile.type.startsWith('image/')) return;
+
+    setLogoFile(selectedFile);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setLogoBase64(reader.result);
+        setLogoPreview(reader.result);
+      }
+    };
+    reader.readAsDataURL(selectedFile);
+  };
+
+  const handleEnvChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const selectedFile = e.target.files?.[0];
+    if (!selectedFile || !selectedFile.type.startsWith('image/')) return;
+
+    setEnvFile(selectedFile);
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      if (typeof reader.result === 'string') {
+        setEnvBase64(reader.result);
+        setEnvPreview(reader.result);
+      }
+    };
+    reader.readAsDataURL(selectedFile);
+  };
+
   // ================= STATES: STEP 2 - CREATIVE BRIEF =================
   const [eventContent, setEventContent] = useState('');
   const [toneOfVoice, setToneOfVoice] = useState('Santai & Ramah');
@@ -78,7 +237,7 @@ export default function NewProjectPage() {
   }, [currentStep, institutionName, eventContent, selectedKeyMessage]);
 
   const handleNext = () => {
-    // Validasi Step 1 (Program Studi tidak wajib)
+    // Validasi Step 1 
     if (currentStep === 1 && (!institutionName || !institutionHistory || !schoolLevel)) {
       alert("Mohon lengkapi Nama Institusi, Sejarah, dan Tingkat Sekolah."); return;
     }
@@ -97,6 +256,7 @@ export default function NewProjectPage() {
     // 1. Simpan semua data input (Creative Brief) ke Local Storage
     const projectDraft = {
       institutionName, offeredDegrees, eventContent, toneOfVoice, selectedKeyMessage, selectedTheme, prompt, copywriting: editableCopywriting,
+      logoBase64, envBase64, base64, // Include image base64s
     };
     localStorage.setItem('currentProjectDraft', JSON.stringify(projectDraft));
 
@@ -145,6 +305,23 @@ export default function NewProjectPage() {
         <div className={styles.card}>
           <h2>Business Brief</h2>
           <p className={styles.subtitle}>Informasi fundamental mengenai profil institusi Anda.</p>
+
+            <div className={styles.formGroup}>
+            <label>Upload File Mengenai Kampus<span style={{color:'#6c757d', fontWeight:'normal'}}>(Opsional)</span></label>
+            <input 
+              type="file" 
+              className={styles.input}
+              accept="image/*,.pdf,.txt,.doc,.docx"
+              onChange={handleFileChange}
+            />
+          </div>
+        
+{/* {pdfText && (
+  <div style={{ marginTop: "1rem" }}>
+    <label>Extracted PDF Text:</label>
+    <textarea value={pdfText} readOnly rows={6} className={styles.textarea} />
+  </div>
+)} */}
           
           <div className={styles.formGroup}>
             <label>Nama Institusi <span style={{color:'red'}}>*</span></label>
@@ -174,6 +351,38 @@ export default function NewProjectPage() {
             <label>Program Studi / Gelar yang Ditawarkan <span style={{color:'#6c757d', fontWeight:'normal'}}>(Opsional)</span></label>
             <input type="text" className={styles.input} placeholder="Contoh: S1 Informatika, S2 Manajemen..." value={offeredDegrees} onChange={(e) => setOfferedDegrees(e.target.value)} />
           </div>
+          
+          <div className={styles.formGroup}>
+            <label>Upload File Logo Institut <span style={{color:'red'}}>*</span></label>
+            <input 
+              type="file" 
+              className={styles.input}
+              accept="image/*"
+              onChange={handleLogoChange}
+            />
+          </div>
+          {logoPreview && (
+  <div style={{ marginTop: "1rem" }}>
+    <img src={logoPreview} alt="Logo preview" style={{ width: "200px", height: "200px", borderRadius: "8px", objectFit: "contain" }} />
+  </div>
+)}
+
+          <div className={styles.formGroup}>
+            <label>Upload File Foto Lingkungan Institut<span style={{color:'red'}}>*</span></label>
+            <input 
+              type="file" 
+              className={styles.input}
+              accept="image/*"
+              onChange={handleEnvChange}
+            />
+          </div>
+          {envPreview && (
+  <div style={{ marginTop: "1rem" }}>
+    <img src={envPreview} alt="Environment preview" style={{ width: "200px", height: "200px", borderRadius: "8px", objectFit: "contain" }} />
+  </div>
+)}
+
+
 
           <div className={styles.footerActions}>
             <button className={styles.btnPrimary} onClick={handleNext}>Lanjut ke Creative Brief →</button>
@@ -278,6 +487,25 @@ export default function NewProjectPage() {
               <p><b>Tema & Gaya:</b> {selectedTheme} / {toneOfVoice}</p>
               <p><b>Pesan Utama:</b> "{selectedKeyMessage}"</p>
               <p><b>Instruksi Tambahan:</b> {prompt}</p>
+            </div>
+
+            {/* IMAGES SECTION */}
+            <div className={styles.editHeader} style={{marginTop: '2rem'}}>
+              <h4>GAMBAR INSTITUSI</h4>
+            </div>
+            <div style={{display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap', justifyContent: 'center'}}>
+              {logoPreview && (
+                <div style={{textAlign: 'center'}}>
+                  <p style={{margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#6c757d'}}>Logo Institut</p>
+                  <img src={logoPreview} alt="Logo preview" style={{width: '150px', height: '150px', borderRadius: '8px', border: '1px solid #ddd', objectFit: 'contain'}} />
+                </div>
+              )}
+              {envPreview && (
+                <div style={{textAlign: 'center'}}>
+                  <p style={{margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#6c757d'}}>Foto Lingkungan</p>
+                  <img src={envPreview} alt="Environment preview" style={{width: '150px', height: '150px', borderRadius: '8px', border: '1px solid #ddd', objectFit: 'contain'}} />
+                </div>
+              )}
             </div>
 
             {/* EDITABLE COPYWRITING */}
