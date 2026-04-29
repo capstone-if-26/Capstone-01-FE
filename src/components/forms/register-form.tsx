@@ -21,30 +21,22 @@ export default function RegisterForm() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    try {
-        const res = await submitRegister({
-            name: form.fullName,
-            email: form.email,
-            password: form.password,
-        });
+const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  e.preventDefault();
+  try {
+    const res = await submitRegister({
+      name: form.fullName,
+      email: form.email,
+      password: form.password,
+    });
 
-        console.log("Register success:", res);
-        
-        // 1. Simpan data input asli ke Local Storage
-        localStorage.setItem("registeredName", form.fullName);
-        localStorage.setItem("registeredEmail", form.email);
-        
-        // 2. Beri notifikasi dan arahkan ke dashboard
-        alert("Registrasi berhasil! Selamat datang di Sevima AI.");
-        router.push("/dashboard");
-
-    } catch (error) {
-        console.error("Register gagal:", error);
-        alert("Register gagal");
+    if (res.success) {
+      router.push("/login");
     }
-  };
+  } catch (error: any) {
+    alert(error.response?.data?.message || "Register gagal");
+  }
+};
 
   const handleGoogleRegister = () => {
     // TODO: connect to Google OAuth

@@ -19,34 +19,30 @@ export default function LoginForm() {
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
-  const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
-    e.preventDefault();
-    try {
-      const res = await submitLogin({
-        email: form.email,
-        password: form.password,
-      });
+const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
+  e.preventDefault();
+  try {
+    const res = await submitLogin({
+      email: form.email,
+      password: form.password,
+    });
 
-      console.log("Login success:", res);
-      
-      // 1. Simpan email ke Local Storage
-      localStorage.setItem("registeredEmail", form.email);
-      
-      // 2. Jika user ini tidak punya nama di storage, kita buatkan nama otomatis dari email-nya
-      // Contoh: "alya.rahma@sevima.com" menjadi "alya.rahma"
-      if (!localStorage.getItem("registeredName")) {
-         const fallbackName = form.email.split("@")[0];
-         localStorage.setItem("registeredName", fallbackName);
-      }
+    const { access_token, refresh_token, user } = res.data;
 
-      alert("Login berhasil! Selamat datang kembali.");
-      router.push("/dashboard");
+    localStorage.setItem("access_token", access_token);
+    localStorage.setItem("refresh_token", refresh_token);
+    localStorage.setItem("registeredEmail", user.email);
 
-    } catch (error) {
-      console.error("Login gagal:", error);
-      alert("Login gagal, periksa kembali email atau password Anda.");
+    if (!localStorage.getItem("registeredName")) {
+      const fallbackName = user.email.split("@")[0];
+      localStorage.setItem("registeredName", fallbackName);
     }
-  };
+
+    router.push("/dashboard");
+  } catch (error: any) {
+    alert(error.response?.data?.message || "Login gagal");
+  }
+};
 
   const handleGoogleLogin = () => {
     // TODO: connect to Google OAuth

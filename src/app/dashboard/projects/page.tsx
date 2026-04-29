@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import styles from './projects.module.css';
+import { createProject, createBusinessBrief, createCreativeBrief, generateContentPillars, generateStoryboards } from '@/services/project.service';
 
 // Opsi Pesan Utama berdasarkan Tone of Voice
 const keyMessageOptions: Record<string, string[]> = {
@@ -249,21 +250,111 @@ export default function NewProjectPage() {
   };
 
   const prevStep = () => setCurrentStep((prev) => prev - 1);
+  // fallback ke local jika request > 10 detik atau gagal
+const withTimeout = (promise: Promise<any>, ms: number) => {
+  return new Promise((resolve, reject) => {
+    const timer = setTimeout(() => reject(new Error("TIMEOUT")), ms);
+    promise
+      .then((res) => {
+        clearTimeout(timer);
+        resolve(res);
+      })
+      .catch((err) => {
+        clearTimeout(timer);
+        reject(err);
+      });
+  });
+};
 
-  const handleGenerate = () => {
-    setIsGenerating(true);
-    
-    // 1. Simpan semua data input (Creative Brief) ke Local Storage
-    const projectDraft = {
-      institutionName, offeredDegrees, eventContent, toneOfVoice, selectedKeyMessage, selectedTheme, prompt, copywriting: editableCopywriting,
-      logoBase64, envBase64, base64, // Include image base64s
-    };
-    localStorage.setItem('currentProjectDraft', JSON.stringify(projectDraft));
-
-    // 2. TAMBAHKAN QUERY PARAMETER '?new=true' SAAT PUSH ROUTER
-    // Perubahan di baris bawah ini 👇
-    setTimeout(() => router.push('/dashboard/storyboard?new=true'), 3000);
+// fallback save ke localStorage jika gagal ke DB (>10 detik atau error)
+const saveToLocalDraft = () => {
+  const draft = {
+    institutionName,
+    institutionHistory,
+    schoolLevel,
+    offeredDegrees,
+    eventContent,
+    toneOfVoice,
+    selectedKeyMessage,
+    videoDuration,
+    prompt,
+    selectedTheme,
+    editableCopywriting,
+    editableHashtags,
+    logoBase64,
+    envBase64,
+    base64,
   };
+  localStorage.setItem("project_draft_backup", JSON.stringify(draft));
+};
+
+const handleGenerate = async () => {
+  setIsGenerating(true);
+
+  try {
+    const projectRes: any = await withTimeout(
+      createProject({
+        name: institutionName,
+        description: institutionHistory,
+      }),
+      10000
+    );
+
+    const projectId = projectRes.data.id;
+
+    await withTimeout(
+      createBusinessBrief({
+        project_id: projectId,
+        institution_name: institutionName,
+        history: institutionHistory,
+        school_level: schoolLevel,
+        degrees: offeredDegrees,
+        logo: logoBase64,
+        environment: envBase64,
+      }),
+      10000
+    );
+
+    await withTimeout(
+      createCreativeBrief({
+        project_id: projectId,
+        event: eventContent,
+        tone: toneOfVoice,
+        key_message: selectedKeyMessage,
+        duration: videoDuration,
+        prompt: prompt,
+        theme: selectedTheme,
+        copywriting: editableCopywriting,
+        hashtags: editableHashtags,
+      }),
+      10000
+    );
+
+    await withTimeout(generateContentPillars(projectId), 10000);
+    await withTimeout(generateStoryboards(projectId), 10000);
+
+    router.push(`/dashboard/storyboard?projectId=${projectId}`);
+  } catch (err) {
+    saveToLocalDraft();
+    router.push("/dashboard/storyboard?offline=true");
+  } finally {
+    setIsGenerating(false);
+  }
+};
+  // const handleGenerate = () => {
+  //   setIsGenerating(true);
+    
+  //   // 1. Simpan semua data input (Creative Brief) ke Local Storage
+  //   const projectDraft = {
+  //     institutionName, offeredDegrees, eventContent, toneOfVoice, selectedKeyMessage, selectedTheme, prompt, copywriting: editableCopywriting,
+  //     logoBase64, envBase64, base64, // Include image base64s
+  //   };
+  //   localStorage.setItem('currentProjectDraft', JSON.stringify(projectDraft));
+
+  //   // 2. TAMBAHKAN QUERY PARAMETER '?new=true' SAAT PUSH ROUTER
+  //   // Perubahan di baris bawah ini 👇
+  //   setTimeout(() => router.push('/dashboard/storyboard?new=true'), 3000);
+  // };
 
   const handleExportPDF = async () => {
     if (!briefRef.current) return;

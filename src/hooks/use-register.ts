@@ -14,9 +14,11 @@ export function useRegister() {
     setLoading(true);
     try {
       const res = await registerUser(form);
+
       if (res.success) {
         router.push("/login");
       }
+
       return res;
     } finally {
       setLoading(false);
