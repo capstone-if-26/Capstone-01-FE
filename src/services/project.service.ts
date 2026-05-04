@@ -1,29 +1,34 @@
 import api from "@/lib/axios";
 
-export const createProject = async (data: {
-  name: string;
-  description: string;
+export const initializeProject = async (data: {
+  institution_name: string;
+  institution_history?: string;
+  school_level?: string;
+  offered_degrees?: string;
+
+  event_content: string;
+  tone_of_voice: string;
+  selected_key_message: string;
+  video_duration?: string;
+  prompt?: string;
+
+  selected_theme: string;
+
+  editable_copywriting?: string;
+  editable_hashtags?: string;
+
+  logo_base64?: string;
+  env_base64?: string;
+  document_base64?: string;
 }) => {
-  const res = await api.post("/api/projects", data);
+  const res = await api.post("/api/projects/initialize", data);
   return res.data;
 };
 
-export const createBusinessBrief = async (data: any) => {
-  const res = await api.post("/api/briefs/business", data);
-  return res.data;
-};
 
-export const createCreativeBrief = async (data: any) => {
-  const res = await api.post("/api/briefs/creative", data);
-  return res.data;
-};
-
-export const generateContentPillars = async (projectId: string) => {
-  const res = await api.post(`/api/projects/${projectId}/content-pillars/generate`);
-  return res.data;
-};
-
-export const generateStoryboards = async (projectId: string) => {
-  const res = await api.post(`/api/projects/${projectId}/storyboards/generate`);
-  return res.data;
-};
+// export const generateStoryboard = async (projectId: string) => {
+//   const res = await api.post("/api/storyboard/generate", {
+//     project_id: projectId,
+//   });
+//   return res.data;
+// };

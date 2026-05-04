@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import styles from './projects.module.css';
-import { createProject, createBusinessBrief, createCreativeBrief, generateContentPillars, generateStoryboards } from '@/services/project.service';
+import { initializeProject } from '@/services/project.service';
 
 // Opsi Pesan Utama berdasarkan Tone of Voice
 const keyMessageOptions: Record<string, string[]> = {
@@ -292,51 +292,67 @@ const handleGenerate = async () => {
   setIsGenerating(true);
 
   try {
-    const projectRes: any = await withTimeout(
-      createProject({
-        name: institutionName,
-        description: institutionHistory,
-      }),
+    console.log("START SAVE...");
+
+    const payload = {
+      // STEP 1
+      institution_name: institutionName,
+      institution_history: institutionHistory,
+      school_level: schoolLevel,
+      offered_degrees: offeredDegrees,
+
+      // STEP 2
+      event_content: eventContent,
+      tone_of_voice: toneOfVoice,
+      selected_key_message: selectedKeyMessage,
+      video_duration: videoDuration,
+      prompt: prompt,
+
+      // STEP 3
+      selected_theme: selectedTheme,
+
+      // STEP 4
+      editable_copywriting: editableCopywriting,
+      editable_hashtags: editableHashtags,
+
+      // IMAGES
+      logo_base64: logoBase64,
+      env_base64: envBase64,
+      document_base64: base64,
+    };
+
+    console.log("PAYLOAD:", payload);
+
+    const res: any = await withTimeout(
+      initializeProject(payload),
       10000
     );
 
-    const projectId = projectRes.data.id;
+    console.log("INIT RES:", res);
 
-    await withTimeout(
-      createBusinessBrief({
-        project_id: projectId,
-        institution_name: institutionName,
-        history: institutionHistory,
-        school_level: schoolLevel,
-        degrees: offeredDegrees,
-        logo: logoBase64,
-        environment: envBase64,
-      }),
-      10000
-    );
+    // const projectId = res?.data?.id || res?.id;
 
-    await withTimeout(
-      createCreativeBrief({
-        project_id: projectId,
-        event: eventContent,
-        tone: toneOfVoice,
-        key_message: selectedKeyMessage,
-        duration: videoDuration,
-        prompt: prompt,
-        theme: selectedTheme,
-        copywriting: editableCopywriting,
-        hashtags: editableHashtags,
-      }),
-      10000
-    );
+    // if (!projectId) throw new Error("PROJECT ID NULL");
 
-    await withTimeout(generateContentPillars(projectId), 10000);
-    await withTimeout(generateStoryboards(projectId), 10000);
+    // await withTimeout(
+    //   generateStoryboard(projectId),
+    //   10000
+    // );
 
-    router.push(`/dashboard/storyboard?projectId=${projectId}`);
-  } catch (err) {
+    console.log("Project OK");
+    
+    router.push(`/dashboard`);
+
+    // router.push(`/dashboard/storyboard?projectId=${projectId}`);
+
+  } catch (err: any) {
+    console.error("FULL ERROR:", err);
+    console.error("API ERROR:", err?.response?.data);
+  
     saveToLocalDraft();
-    router.push("/dashboard/storyboard?offline=true");
+
+    alert("Gagal save ke DB (>10 detik / API error), disimpan ke localStorage");
+
   } finally {
     setIsGenerating(false);
   }
@@ -352,7 +368,7 @@ const handleGenerate = async () => {
   //   localStorage.setItem('currentProjectDraft', JSON.stringify(projectDraft));
 
   //   // 2. TAMBAHKAN QUERY PARAMETER '?new=true' SAAT PUSH ROUTER
-  //   // Perubahan di baris bawah ini 👇
+  //   // Perubahan di baris bawah ini 
   //   setTimeout(() => router.push('/dashboard/storyboard?new=true'), 3000);
   // };
 
