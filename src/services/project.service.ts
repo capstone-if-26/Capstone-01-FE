@@ -24,11 +24,3 @@ export const initializeProject = async (data: {
   const res = await api.post("/api/projects/initialize", data);
   return res.data;
 };
-
-
-// export const generateStoryboard = async (projectId: string) => {
-//   const res = await api.post("/api/storyboard/generate", {
-//     project_id: projectId,
-//   });
-//   return res.data;
-// };

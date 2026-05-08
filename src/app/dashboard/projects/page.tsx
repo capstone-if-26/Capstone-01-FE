@@ -6,6 +6,7 @@ import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import styles from './projects.module.css';
 import { initializeProject } from '@/services/project.service';
+import storyboardService from '@/services/storyboard.service';
 
 // Opsi Pesan Utama berdasarkan Tone of Voice
 const keyMessageOptions: Record<string, string[]> = {
@@ -39,6 +40,7 @@ const videoThemes = [
 ];
 
 export default function NewProjectPage() {
+
   const router = useRouter();
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -292,70 +294,117 @@ const handleGenerate = async () => {
   setIsGenerating(true);
 
   try {
-    console.log("START SAVE...");
-
     const payload = {
-      // STEP 1
       institution_name: institutionName,
       institution_history: institutionHistory,
       school_level: schoolLevel,
       offered_degrees: offeredDegrees,
 
-      // STEP 2
       event_content: eventContent,
       tone_of_voice: toneOfVoice,
       selected_key_message: selectedKeyMessage,
       video_duration: videoDuration,
       prompt: prompt,
 
-      // STEP 3
       selected_theme: selectedTheme,
 
-      // STEP 4
       editable_copywriting: editableCopywriting,
       editable_hashtags: editableHashtags,
 
-      // IMAGES
       logo_base64: logoBase64,
       env_base64: envBase64,
       document_base64: base64,
     };
 
-    console.log("PAYLOAD:", payload);
+    // STEP 1
+    const projectRes = await initializeProject(payload);
+console.log("PROJECT RES:", projectRes);
+    const projectId =
+  projectRes?.data?.id ||
+  projectRes?.data?.project_id ||
+  projectRes?.data?.project?.id;
 
-    const res: any = await withTimeout(
-      initializeProject(payload),
-      10000
-    );
+console.log("PROJECT ID:", projectId);
 
-    console.log("INIT RES:", res);
+    if (!projectId) {
+      throw new Error("PROJECT ID NOT FOUND");
+    }
+      // const durationMap: Record<string, number> = {
+      //   "Short (15 detik)": 15,
+      //   "Medium (30 detik)": 30,
+      //   "Long (60 detik)": 60,
+      // };
 
-    // const projectId = res?.data?.id || res?.id;
+      // const selectedDuration = durationMap[videoDuration];
 
-    // if (!projectId) throw new Error("PROJECT ID NULL");
+      // if (!selectedDuration) {
+      //   throw new Error("VIDEO DURATION INVALID");
+      // }
 
-    // await withTimeout(
-    //   generateStoryboard(projectId),
-    //   10000
-    // );
+    // STEP 2
 
-    console.log("Project OK");
-    
-    router.push(`/dashboard`);
+  // =========================
+  // STEP 2 - CREATE STORYBOARD
+  // =========================
+  const createStoryboardRes =
+    await storyboardService.createManualStoryboard({
+      project_id: projectId,
 
-    // router.push(`/dashboard/storyboard?projectId=${projectId}`);
+      title: `${institutionName} - ${eventContent}`,
 
-  } catch (err: any) {
-    console.error("FULL ERROR:", err);
-    console.error("API ERROR:", err?.response?.data);
-  
-    saveToLocalDraft();
+      description:
+        `${selectedTheme} | ${toneOfVoice}`,
 
-    alert("Gagal save ke DB (>10 detik / API error), disimpan ke localStorage");
+      style: selectedTheme,
 
-  } finally {
-    setIsGenerating(false);
+      sections: [
+        {
+          section_type: "hook",
+          content:
+            selectedKeyMessage ||
+            "Welcome to our institution",
+          duration: 5,
+        },
+        {
+          section_type: "value",
+          content:
+            editableCopywriting ||
+            institutionHistory,
+          duration: 5,
+        },
+        {
+          section_type: "cta",
+          content:
+            `Join ${institutionName} now!`,
+          duration: 5,
+        },
+      ],
+    });
+
+  console.log(
+    "CREATE STORYBOARD RES:",
+    createStoryboardRes
+  );
+
+  const storyboardId =
+    createStoryboardRes?.data?.id;
+
+  if (!storyboardId) {
+    throw new Error("STORYBOARD ID NOT FOUND");
   }
+
+  // =========================
+  // STEP 3 - REDIRECT
+  // =========================
+  router.push(
+    `/dashboard/storyboard?projectId=${projectId}&storyboardId=${storyboardId}`
+  );
+} catch (err) {
+  console.error(err);
+  alert("Gagal generate storyboard");
+} finally {
+  setIsGenerating(false);
+}
 };
   // const handleGenerate = () => {
   //   setIsGenerating(true);
@@ -514,15 +563,22 @@ const handleGenerate = async () => {
                 <option value="Pengenalan Kehidupan Kampus">Pengenalan Kehidupan Kampus (PKKMB)</option>
               </select>
             </div>
-            <div className={styles.formGroup}>
-              <label>Durasi Video <span style={{color:'red'}}>*</span></label>
-              <select className={styles.select} value={videoDuration} onChange={(e) => setVideoDuration(e.target.value)}>
-                <option value="">-- Pilih Durasi --</option>
-                <option value="Short (15 detik)">Short (15 detik)</option>
-                <option value="Medium (30 detik)">Medium (30 detik)</option>
-                <option value="Long (60 detik)">Long (60 detik)</option>
-              </select>
-            </div>
+              <div className={styles.formGroup}>
+                <label>
+                  Durasi Video <span style={{ color: "red" }}>*</span>
+                </label>
+
+                <select
+                  className={styles.select}
+                  value={videoDuration}
+                  onChange={(e) => setVideoDuration(e.target.value)}
+                >
+                  <option value="">-- Pilih Durasi --</option>
+                  <option value="Short (15 detik)">Short (15 detik)</option>
+                  <option value="Medium (30 detik)">Medium (30 detik)</option>
+                  <option value="Long (60 detik)">Long (60 detik)</option>
+                </select>
+              </div>
           </div>
           
           <div className={styles.formGroup}>
