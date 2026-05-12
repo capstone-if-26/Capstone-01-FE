@@ -1,6 +1,6 @@
 import React from 'react';
 import Sidebar from '@/components/layout/sidebar';
-import styles from './dashboard.module.css';
+import styles from './layout.module.css';
 
 export default function DashboardLayout({
   children,
@@ -14,7 +14,7 @@ export default function DashboardLayout({
       <main className={styles.mainContent}>
         <header className={styles.topHeader}>
            <div className={styles.headerLeft}>
-             <h3>New Project</h3>
+             <h3>Workspace</h3>
            </div>
            
            <div className={styles.searchBar}>

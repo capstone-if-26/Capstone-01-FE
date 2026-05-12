@@ -62,7 +62,7 @@ export default function LibraryPage() {
 
   const handleNewProject = () => {
     // Arahkan kembali ke alur pembuatan project (Step 1)
-    router.push('/dashboard/projects');
+    router.push('/projects');
   };
 
   return (

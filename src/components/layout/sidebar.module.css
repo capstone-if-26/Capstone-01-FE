@@ -1,14 +1,17 @@
 .sidebar {
   width: 260px;
   background-color: white;
-  border-right: 1px solid #e9ecef;
+  position: fixed;
+  top: 0;
+  left: 0;
+  height: 100vh;
+
   display: flex;
   flex-direction: column;
-  padding: 1.5rem 0;
 }
 
 .logoContainer {
-  padding: 0 1.5rem 2rem;
+  padding: 1.5rem 1.5rem 2rem;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -72,6 +75,7 @@
 }
 
 .userProfile {
+  margin-top: auto;
   padding: 1rem 1.5rem;
   border-top: 1px solid #e9ecef;
   display: flex;
