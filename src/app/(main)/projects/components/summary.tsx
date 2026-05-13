@@ -113,7 +113,12 @@ export default function ProjectSummary({
               </div>
             </div>
 
-            {/* Info summary card */}
+
+          </div>
+
+          {/* ── RIGHT: Editing Panel ── */}
+          <div className={styles.summaryEditPanel}>
+                            {/* Info summary card */}
             <div className={styles.summaryInfoCard}>
               <div className={styles.summaryInfoRow}>
                 <span className={styles.summaryInfoLabel}>Institusi</span>
@@ -147,11 +152,6 @@ export default function ProjectSummary({
                 </>
               )}
             </div>
-          </div>
-
-          {/* ── RIGHT: Editing Panel ── */}
-          <div className={styles.summaryEditPanel}>
-
             {/* Copywriting */}
             <div className={styles.editSectionCard}>
               <div className={styles.editHeader}>

@@ -75,7 +75,7 @@ export default function DashboardPage() {
       <section className={styles.bottomWidgets}>
         {/* Widget Kiri: Tips */}
         <div className={styles.tipsCard}>
-          <h3>Tips Hari Ini 💡</h3>
+          <h3 style={{ color: 'white' }}>Tips Hari Ini 💡</h3>
           <p>Gunakan prompt yang spesifik untuk mendapatkan detail video yang lebih tajam. Coba tambahkan kata kunci seperti 'cinematic lighting' atau '4k resolution'.</p>
           <button className={styles.outlineButton}>Lihat Panduan Prompt</button>
         </div>

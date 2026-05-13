@@ -331,15 +331,18 @@ const handleGenerate = async () => {
         initializeProject(payload),
         10000
       );
-    } catch (err) {
-      console.error("INIT PROJECT FAILED:", err);
+    } 
+      catch (error: any) {
+  console.log("ERROR RESPONSE:", error.response?.data);
+  console.log("STATUS:", error.response?.status);
+
 
       // fallback local draft
-      saveToLocalDraft();
+      // saveToLocalDraft();
 
-      alert(
-        "Server terlalu lama merespon. Draft disimpan sementara di browser."
-      );
+      // alert(
+      //   "Server terlalu lama merespon. Draft disimpan sementara di browser."
+      // );
 
       return;
     }
