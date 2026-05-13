@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect, Suspense } from "react";
+import React, { useState, useEffect, useRef, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./storyboard.module.css";
 
 import { storyboardService } from "@/services/storyboard.service";
-import { generateVideoService } from "@/services/ai.service";
+import { videoService, VideoVariantStatus } from "@/services/video.service";
 
 interface Scene {
   id: string;
@@ -19,94 +19,103 @@ interface Scene {
   isEditing: boolean;
 }
 
+// ─── Status label mapping ─────────────────────────────────────────────────────
+const STATUS_LABELS: Record<string, string> = {
+  queued: "Antrian…",
+  generating_assets: "Mengirim ke AI Wavespeed…",
+  processing: "Wavespeed sedang generate…",
+  stitching_video: "Menggabungkan scene…",
+  completed: "Selesai!",
+  failed: "Gagal — coba lagi",
+  pending: "Mempersiapkan…",
+};
+
+// ─── Progress percentage mapping ─────────────────────────────────────────────
+const STATUS_PROGRESS: Record<string, number> = {
+  pending: 5,
+  queued: 10,
+  generating_assets: 30,
+  processing: 55,
+  stitching_video: 80,
+  completed: 100,
+  failed: 100,
+};
+
 function StoryboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const [scenes, setScenes] = useState<Scene[]>([]);
-
   const [projectMeta, setProjectMeta] = useState({
     title: "Memuat Project...",
     duration: "00:00",
   });
+  const [view, setView] = useState<"list" | "storyboard" | "output" | null>(null);
 
-  const [view, setView] = useState<
-    "list" | "storyboard" | "output" | null
-  >(null);
-
+  // Rendering / output state
   const [isRendering, setIsRendering] = useState(false);
-
   const [renderProgress, setRenderProgress] = useState(0);
+  const [renderStatus, setRenderStatus] = useState("");
+  const [videoURL, setVideoURL] = useState<string | null>(null);
+  const [variantId, setVariantId] = useState<string | null>(null);
+  const [renderError, setRenderError] = useState<string | null>(null);
+
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   /* =========================
      FETCH STORYBOARD
   ========================= */
 
-useEffect(() => {
-  const storyboardId =
-    searchParams.get("storyboardId");
+  useEffect(() => {
+    const storyboardId = searchParams.get("storyboardId");
+    if (!storyboardId) {
+      setView("list");
+      return;
+    }
 
-  if (!storyboardId) {
-    setView("list");
-    return;
-  }
+    const fetchStoryboard = async () => {
+      try {
+        const res = await storyboardService.getStoryboardDetail(storyboardId);
+        const storyboard = res.data;
 
-  const fetchStoryboard = async () => {
-    try {
-      const res =
-        await storyboardService.getStoryboardDetail(
-          storyboardId
-        );
+        setProjectMeta({
+          title: storyboard.title,
+          duration: `${storyboard.total_duration}s`,
+        });
 
-      console.log("STORYBOARD DETAIL:", res);
-
-      const storyboard = res.data;
-
-      setProjectMeta({
-        title: storyboard.title,
-        duration: `${storyboard.total_duration}s`,
-      });
-
-      const mappedScenes: Scene[] =
-        storyboard.sections.map(
+        const mappedScenes: Scene[] = storyboard.sections.map(
           (section: any, index: number) => ({
             id: String(index + 1).padStart(2, "0"),
-
-            time: `00:00:${String(
-              index * section.duration
-            ).padStart(2, "0")}`,
-
+            time: `00:00:${String(index * section.duration).padStart(2, "0")}`,
             title: section.section_type,
-
-            duration: `00:${String(
-              section.duration
-            ).padStart(2, "0")}`,
-
+            duration: `00:${String(section.duration).padStart(2, "0")}`,
             status: "Ready",
-
             narration: section.content,
-
             visual: section.content,
-
             thumbnail: null,
-
             isEditing: false,
           })
         );
 
-      setScenes(mappedScenes);
+        setScenes(mappedScenes);
+        setView("storyboard");
+      } catch (err) {
+        console.error(err);
+        setView("list");
+      }
+    };
 
-      setView("storyboard");
-    } catch (err) {
-      console.error(err);
+    fetchStoryboard();
+  }, [searchParams]);
 
-      setView("list");
-    }
-  };
-
-  fetchStoryboard();
-}, [searchParams]);
+  /* =========================
+     STOP POLLING ON UNMOUNT
+  ========================= */
+  useEffect(() => {
+    return () => {
+      if (pollRef.current) clearInterval(pollRef.current);
+    };
+  }, []);
 
   /* =========================
      EDIT SCENE
@@ -114,11 +123,7 @@ useEffect(() => {
 
   const toggleEditScene = (id: string) => {
     setScenes((prev) =>
-      prev.map((s) =>
-        s.id === id
-          ? { ...s, isEditing: !s.isEditing }
-          : s
-      )
+      prev.map((s) => (s.id === id ? { ...s, isEditing: !s.isEditing } : s))
     );
   };
 
@@ -128,58 +133,103 @@ useEffect(() => {
     value: string
   ) => {
     setScenes((prev) =>
-      prev.map((s) =>
-        s.id === id
-          ? { ...s, [field]: value }
-          : s
-      )
+      prev.map((s) => (s.id === id ? { ...s, [field]: value } : s))
     );
+  };
+
+  /* =========================
+     POLL VARIANT STATUS
+  ========================= */
+
+  const startPolling = (vid: string) => {
+    if (pollRef.current) clearInterval(pollRef.current);
+
+    pollRef.current = setInterval(async () => {
+      try {
+        const res = await videoService.getVideoStatus(vid);
+        const data: VideoVariantStatus = res.data;
+
+        const progress = STATUS_PROGRESS[data.status] ?? 50;
+        const label = STATUS_LABELS[data.status] ?? `Status: ${data.status}`;
+
+        setRenderProgress(progress);
+        setRenderStatus(label);
+
+        if (data.status === "completed" || data.video_url) {
+          clearInterval(pollRef.current!);
+          setIsRendering(false);
+          setRenderProgress(100);
+          setRenderStatus("Video siap diunduh!");
+          setVideoURL(data.video_url || null);
+        } else if (data.status === "failed") {
+          clearInterval(pollRef.current!);
+          setIsRendering(false);
+          setRenderError("Gagal generate video. Silakan coba lagi.");
+        }
+      } catch (err) {
+        console.warn("[Poll] Error:", err);
+      }
+    }, 5000);
   };
 
   /* =========================
      FINAL RENDER
   ========================= */
 
-const handleFinalRender = async () => {
-  try {
+  const handleFinalRender = async () => {
+    const storyboardId = searchParams.get("storyboardId");
+    const projectId = searchParams.get("projectId");
+    if (!storyboardId || !projectId) return;
+
     setView("output");
-
     setIsRendering(true);
+    setRenderProgress(5);
+    setRenderStatus("Mengirim ke backend…");
+    setVideoURL(null);
+    setRenderError(null);
+    setVariantId(null);
 
-    setRenderProgress(10);
-
-    const storyboardId =
-      searchParams.get("storyboardId");
-
-    if (!storyboardId) return;
-
-    setRenderProgress(30);
-
-    // generate video
-    const generateRes =
-      await generateVideoService.generate({
+    try {
+      // 1. Trigger generation — backend creates GenerationJob + VideoVariant
+      const res = await videoService.generateVideo({
+        project_id: projectId,
         storyboard_id: storyboardId,
       });
 
-    setRenderProgress(70);
+      console.log("[Render] Job created:", res);
+      setRenderStatus("Job diterima. Mencari variant ID…");
+      setRenderProgress(15);
 
-    // ambil hasil final video
-    const result =
-      await generateVideoService.getVideoResult(
-        generateRes.url
-      );
+      // 2. Find the variant ID for the storyboard (created by backend)
+      let foundVariantId: string | null = null;
+      for (let attempt = 0; attempt < 10; attempt++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        try {
+          const varRes = await videoService.getStoryboardVariants(storyboardId);
+          if (varRes.data && varRes.data.length > 0) {
+            foundVariantId = varRes.data[0].id;
+            break;
+          }
+        } catch (_) {}
+      }
 
-    setVideoUrl(result.url);
+      if (!foundVariantId) {
+        throw new Error("Variant ID tidak ditemukan setelah 20 detik.");
+      }
 
-    setRenderProgress(100);
+      setVariantId(foundVariantId);
+      setRenderStatus("Wavespeed sedang generate video…");
+      setRenderProgress(25);
 
-    setIsRendering(false);
-  } catch (err) {
-    console.error(err);
-
-    setIsRendering(false);
-  }
-};
+      // 3. Start polling variant status
+      startPolling(foundVariantId);
+    } catch (err: any) {
+      console.error("[Render] FAILED:", err);
+      setRenderError(err?.message || "Gagal memulai proses render video.");
+      setIsRendering(false);
+      setRenderProgress(0);
+    }
+  };
 
   /* =========================
      LOADING
@@ -207,7 +257,6 @@ const handleFinalRender = async () => {
             borderTopColor: "#0d6efd",
           }}
         />
-
         Memuat Project Storyboard...
       </div>
     );
@@ -222,35 +271,23 @@ const handleFinalRender = async () => {
             <button
               className={styles.btnGhost}
               onClick={() => setView("list")}
-              style={{
-                marginBottom: "1rem",
-                padding: 0,
-              }}
+              style={{ marginBottom: "1rem", padding: 0 }}
             >
               ← Kembali ke Daftar
             </button>
 
-            <h1>Storyboard & Scene Timeline</h1>
+            <h1>Storyboard &amp; Scene Timeline</h1>
 
             <p>
-              Project: <b>{projectMeta.title}</b> •{" "}
-              {projectMeta.duration}
+              Project: <b>{projectMeta.title}</b> &bull; {projectMeta.duration}
             </p>
           </header>
 
           <div className={styles.timeline}>
             {scenes.map((scene) => (
-              <div
-                key={scene.id}
-                className={styles.sceneItem}
-              >
-                <div className={styles.sceneNumber}>
-                  {scene.id}
-                </div>
-
-                <div className={styles.sceneTime}>
-                  {scene.time}
-                </div>
+              <div key={scene.id} className={styles.sceneItem}>
+                <div className={styles.sceneNumber}>{scene.id}</div>
+                <div className={styles.sceneTime}>{scene.time}</div>
 
                 <div className={styles.sceneCard}>
                   <div
@@ -270,45 +307,25 @@ const handleFinalRender = async () => {
                         alignItems: "center",
                       }}
                     >
-                      <div
-                        style={{
-                          display: "flex",
-                          alignItems: "center",
-                          gap: "8px",
-                        }}
-                      >
+                      <div style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                         <h3>{scene.title}</h3>
-
                         {scene.status === "Ready" && (
-                          <span
-                            style={{ color: "#0d6efd" }}
-                          >
-                            ✓
-                          </span>
+                          <span style={{ color: "#0d6efd" }}>✓</span>
                         )}
                       </div>
 
-                      <div
-                        className={styles.cardActions}
-                        style={{ margin: 0 }}
-                      >
+                      <div className={styles.cardActions} style={{ margin: 0 }}>
                         {scene.isEditing ? (
                           <button
-                            className={
-                              styles.btnActionSave
-                            }
-                            onClick={() =>
-                              toggleEditScene(scene.id)
-                            }
+                            className={styles.btnActionSave}
+                            onClick={() => toggleEditScene(scene.id)}
                           >
                             ✓ Simpan Teks
                           </button>
                         ) : (
                           <button
                             className={styles.btnAction}
-                            onClick={() =>
-                              toggleEditScene(scene.id)
-                            }
+                            onClick={() => toggleEditScene(scene.id)}
                           >
                             Edit Teks
                           </button>
@@ -316,52 +333,32 @@ const handleFinalRender = async () => {
                       </div>
                     </div>
 
-                    <div className={styles.sectionLabel}>
-                      AI NARRATION
-                    </div>
+                    <div className={styles.sectionLabel}>AI NARRATION</div>
 
                     {scene.isEditing ? (
                       <textarea
                         className={`${styles.editArea} ${styles.editAreaNarrative}`}
                         value={scene.narration}
                         onChange={(e) =>
-                          handleSceneChange(
-                            scene.id,
-                            "narration",
-                            e.target.value
-                          )
+                          handleSceneChange(scene.id, "narration", e.target.value)
                         }
                       />
                     ) : (
-                      <p className={styles.narrationText}>
-                        {scene.narration}
-                      </p>
+                      <p className={styles.narrationText}>{scene.narration}</p>
                     )}
 
-                    <div className={styles.sectionLabel}>
-                      VISUAL PROMPT
-                    </div>
+                    <div className={styles.sectionLabel}>VISUAL PROMPT</div>
 
                     {scene.isEditing ? (
                       <textarea
                         className={`${styles.editArea} ${styles.editAreaVisual}`}
                         value={scene.visual}
                         onChange={(e) =>
-                          handleSceneChange(
-                            scene.id,
-                            "visual",
-                            e.target.value
-                          )
+                          handleSceneChange(scene.id, "visual", e.target.value)
                         }
                       />
                     ) : (
-                      <p
-                        className={
-                          styles.visualDescription
-                        }
-                      >
-                        {scene.visual}
-                      </p>
+                      <p className={styles.visualDescription}>{scene.visual}</p>
                     )}
                   </div>
                 </div>
@@ -370,113 +367,122 @@ const handleFinalRender = async () => {
           </div>
 
           <div className={styles.bottomActionArea}>
-            <button
-              className={styles.btnPrimaryLarge}
-              onClick={handleFinalRender}
-            >
-              Combine & Render Final Video ✨
+            <button className={styles.btnPrimaryLarge} onClick={handleFinalRender}>
+              Combine &amp; Render Final Video ✨
             </button>
           </div>
         </>
       )}
 
       {view === "output" && (
-  <div className={styles.outputContainer}>
-    <header className={styles.headerInfo}>
-      <button
-        className={styles.btnGhost}
-        onClick={() => setView("storyboard")}
-        style={{
-          marginBottom: "1rem",
-          padding: 0,
-        }}
-      >
-        ← Kembali ke Storyboard
-      </button>
+        <div className={styles.outputArea}>
+          <div className={styles.progressCard}>
+            <div className={styles.progressIcon}>
+              {renderError ? "❌" : isRendering ? "🎬" : "✅"}
+            </div>
 
-      <h1>Final Video Output</h1>
+            <div className={styles.progressInfo}>
+              <h3>
+                {renderError
+                  ? "Generate Gagal"
+                  : isRendering
+                  ? "Sedang Generate Video via Wavespeed AI…"
+                  : "Video Siap Diunduh!"}
+              </h3>
 
-      <p>
-        Project: <b>{projectMeta.title}</b>
-      </p>
-    </header>
+              <p>
+                {renderError
+                  ? renderError
+                  : isRendering
+                  ? renderStatus || "AI sedang merakit scene storyboard Anda menjadi video sinematik."
+                  : "Proses rendering selesai. Anda dapat meninjau hasilnya di bawah ini."}
+              </p>
 
-    {isRendering ? (
-      <div
-        style={{
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-          alignItems: "center",
-          marginTop: "3rem",
-        }}
-      >
-        <div className={styles.spinnerSmall} />
+              {!renderError && (
+                <div className={styles.progressBarWrapper}>
+                  <div className={styles.progressBar}>
+                    <div
+                      className={styles.progressFill}
+                      style={{ width: `${renderProgress}%` }}
+                    />
+                  </div>
+                  <span>{renderProgress}%</span>
+                </div>
+              )}
+            </div>
+          </div>
 
-        <div>
-          Rendering Video... {renderProgress}%
+          {renderError && (
+            <div style={{ display: "flex", gap: "1rem", justifyContent: "center", marginTop: "1.5rem" }}>
+              <button className={styles.btnOutline} onClick={() => setView("storyboard")}>
+                ← Kembali ke Storyboard
+              </button>
+              <button className={styles.btnPrimary} onClick={handleFinalRender}>
+                Coba Lagi
+              </button>
+            </div>
+          )}
+
+          {!isRendering && !renderError && videoURL && (
+            <div className={styles.resultContainer}>
+              <div className={styles.videoPlayer}>
+                <video
+                  controls
+                  autoPlay={false}
+                  style={{
+                    width: "100%",
+                    borderRadius: "12px",
+                    maxHeight: "480px",
+                    background: "#000",
+                  }}
+                  src={videoURL}
+                >
+                  Browser Anda tidak mendukung tag video.
+                </video>
+              </div>
+
+              <div className={styles.videoActions}>
+                <button
+                  className={styles.btnOutline}
+                  onClick={() => setView("storyboard")}
+                >
+                  Edit Storyboard
+                </button>
+                <a
+                  href={videoURL}
+                  download="generated-video.mp4"
+                  className={styles.btnPrimary}
+                  style={{ textDecoration: "none" }}
+                >
+                  Download MP4
+                </a>
+              </div>
+            </div>
+          )}
+
+          {!isRendering && !renderError && !videoURL && (
+            <div className={styles.resultContainer}>
+              <div className={styles.videoPlayer}>
+                <div className={styles.playBtnLarge}>▶</div>
+                <div className={styles.videoControls}>
+                  <span>00:00 / {projectMeta.duration}</span>
+                </div>
+              </div>
+              <div className={styles.videoActions}>
+                <button className={styles.btnOutline} onClick={() => setView("storyboard")}>
+                  Edit Storyboard
+                </button>
+                <button
+                  className={styles.btnPrimary}
+                  onClick={() => alert("Video URL belum tersedia.")}
+                >
+                  Download MP4
+                </button>
+              </div>
+            </div>
+          )}
         </div>
-
-        <div
-          style={{
-            width: "300px",
-            height: "10px",
-            background: "#eee",
-            borderRadius: "999px",
-            overflow: "hidden",
-          }}
-        >
-          <div
-            style={{
-              width: `${renderProgress}%`,
-              height: "100%",
-              background: "#0d6efd",
-              transition: "0.3s",
-            }}
-          />
-        </div>
-      </div>
-    ) : videoUrl ? (
-      <div
-        style={{
-          marginTop: "2rem",
-          display: "flex",
-          flexDirection: "column",
-          gap: "1rem",
-          alignItems: "center",
-        }}
-      >
-        <video
-          controls
-          autoPlay
-          className={styles.finalVideo}
-          style={{
-            width: "100%",
-            maxWidth: "900px",
-            borderRadius: "20px",
-            background: "#000",
-          }}
-        >
-          <source
-            src={videoUrl}
-            type="video/mp4"
-          />
-        </video>
-
-        <a
-          href={videoUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className={styles.btnPrimaryLarge}
-        >
-          Download Video
-        </a>
-      </div>
-    ) : (
-      <p>Video gagal dimuat.</p>
-    )}
-  </div>
-)}
+      )}
     </div>
   );
 }

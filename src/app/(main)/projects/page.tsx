@@ -358,82 +358,19 @@ const handleGenerate = async () => {
       throw new Error("PROJECT ID NOT FOUND");
     }
 
-    // =========================
-    // STEP 2 - CREATE STORYBOARD
-    // =========================
-
-    let createStoryboardRes;
-
-    try {
-      createStoryboardRes =
-        await withTimeout(
-          storyboardService.createManualStoryboard({
-            project_id: projectId,
-
-            title: `${institutionName} - ${eventContent}`,
-
-            description:
-              `${selectedTheme} | ${toneOfVoice}`,
-
-            style: selectedTheme,
-
-            sections: [
-              {
-                section_type: "hook",
-                content:
-                  selectedKeyMessage ||
-                  "Welcome to our institution",
-                duration: 5,
-              },
-              {
-                section_type: "value",
-                content:
-                  editableCopywriting ||
-                  institutionHistory,
-                duration: 5,
-              },
-              {
-                section_type: "cta",
-                content:
-                  `Join ${institutionName} now!`,
-                duration: 5,
-              },
-            ],
-          }),
-          10000
-        );
-
-    } catch (err) {
-      console.error("CREATE STORYBOARD FAILED:", err);
-
-      saveToLocalDraft();
-
-      alert(
-        "Generate storyboard gagal. Draft disimpan sementara."
-      );
-
-      return;
-    }
-
-    console.log(
-      "CREATE STORYBOARD RES:",
-      createStoryboardRes
-    );
-
-    const storyboardId =
-      createStoryboardRes?.data?.id;
-
+    const storyboardId = projectRes?.data?.storyboard_id;
+    
     if (!storyboardId) {
       saveToLocalDraft();
-      throw new Error("STORYBOARD ID NOT FOUND");
+      throw new Error("STORYBOARD ID NOT FOUND FROM BACKEND");
     }
 
     // =========================
-    // STEP 3 - REDIRECT
+    // STEP 2 - REDIRECT
     // =========================
 
     router.push(
-      `/dashboard/storyboard?projectId=${projectId}&storyboardId=${storyboardId}`
+      `/storyboard?projectId=${projectId}&storyboardId=${storyboardId}`
     );
 
   } catch (err) {
