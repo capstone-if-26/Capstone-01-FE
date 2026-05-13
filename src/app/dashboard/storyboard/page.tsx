@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import styles from "./storyboard.module.css";
 
 import { storyboardService } from "@/services/storyboard.service";
+import { generateVideoService } from "@/services/ai.service";
 
 interface Scene {
   id: string;
@@ -21,6 +22,7 @@ interface Scene {
 function StoryboardContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const [videoUrl, setVideoUrl] = useState<string | null>(null);
 
   const [scenes, setScenes] = useState<Scene[]>([]);
 
@@ -138,27 +140,46 @@ useEffect(() => {
      FINAL RENDER
   ========================= */
 
-  const handleFinalRender = () => {
+const handleFinalRender = async () => {
+  try {
     setView("output");
 
     setIsRendering(true);
 
-    setRenderProgress(0);
+    setRenderProgress(10);
 
-    const interval = setInterval(() => {
-      setRenderProgress((prev) => {
-        if (prev >= 100) {
-          clearInterval(interval);
+    const storyboardId =
+      searchParams.get("storyboardId");
 
-          setIsRendering(false);
+    if (!storyboardId) return;
 
-          return 100;
-        }
+    setRenderProgress(30);
 
-        return prev + 15;
+    // generate video
+    const generateRes =
+      await generateVideoService.generate({
+        storyboard_id: storyboardId,
       });
-    }, 400);
-  };
+
+    setRenderProgress(70);
+
+    // ambil hasil final video
+    const result =
+      await generateVideoService.getVideoResult(
+        generateRes.url
+      );
+
+    setVideoUrl(result.url);
+
+    setRenderProgress(100);
+
+    setIsRendering(false);
+  } catch (err) {
+    console.error(err);
+
+    setIsRendering(false);
+  }
+};
 
   /* =========================
      LOADING
@@ -358,6 +379,104 @@ useEffect(() => {
           </div>
         </>
       )}
+
+      {view === "output" && (
+  <div className={styles.outputContainer}>
+    <header className={styles.headerInfo}>
+      <button
+        className={styles.btnGhost}
+        onClick={() => setView("storyboard")}
+        style={{
+          marginBottom: "1rem",
+          padding: 0,
+        }}
+      >
+        ← Kembali ke Storyboard
+      </button>
+
+      <h1>Final Video Output</h1>
+
+      <p>
+        Project: <b>{projectMeta.title}</b>
+      </p>
+    </header>
+
+    {isRendering ? (
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          alignItems: "center",
+          marginTop: "3rem",
+        }}
+      >
+        <div className={styles.spinnerSmall} />
+
+        <div>
+          Rendering Video... {renderProgress}%
+        </div>
+
+        <div
+          style={{
+            width: "300px",
+            height: "10px",
+            background: "#eee",
+            borderRadius: "999px",
+            overflow: "hidden",
+          }}
+        >
+          <div
+            style={{
+              width: `${renderProgress}%`,
+              height: "100%",
+              background: "#0d6efd",
+              transition: "0.3s",
+            }}
+          />
+        </div>
+      </div>
+    ) : videoUrl ? (
+      <div
+        style={{
+          marginTop: "2rem",
+          display: "flex",
+          flexDirection: "column",
+          gap: "1rem",
+          alignItems: "center",
+        }}
+      >
+        <video
+          controls
+          autoPlay
+          className={styles.finalVideo}
+          style={{
+            width: "100%",
+            maxWidth: "900px",
+            borderRadius: "20px",
+            background: "#000",
+          }}
+        >
+          <source
+            src={videoUrl}
+            type="video/mp4"
+          />
+        </video>
+
+        <a
+          href={videoUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={styles.btnPrimaryLarge}
+        >
+          Download Video
+        </a>
+      </div>
+    ) : (
+      <p>Video gagal dimuat.</p>
+    )}
+  </div>
+)}
     </div>
   );
 }

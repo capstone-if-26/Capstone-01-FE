@@ -5,6 +5,10 @@ import { useRouter } from 'next/navigation';
 import jsPDF from 'jspdf';
 import html2canvas from 'html2canvas';
 import styles from './projects.module.css';
+import BusinessBrief from "./components/businessbrief";
+import CreativeBrief from "./components/creativebrief";
+import VideoTheme from "./components/videotheme";
+import ProjectSummary from "./components/summary";
 import { initializeProject } from '@/services/project.service';
 import storyboardService from '@/services/storyboard.service';
 
@@ -456,272 +460,90 @@ console.log("PROJECT ID:", projectId);
         ))}
       </div>
 
-      {/* STEP 1: BUSINESS BRIEF */}
       {currentStep === 1 && (
-        <div className={styles.card}>
-          <h2>Business Brief</h2>
-          <p className={styles.subtitle}>Informasi fundamental mengenai profil institusi Anda.</p>
-
-            <div className={styles.formGroup}>
-            <label>Upload File Mengenai Kampus<span style={{color:'#6c757d', fontWeight:'normal'}}>(Opsional)</span></label>
-            <input 
-              type="file" 
-              className={styles.input}
-              accept="image/*,.pdf,.txt,.doc,.docx"
-              onChange={handleFileChange}
-            />
-          </div>
-        
-{/* {pdfText && (
-  <div style={{ marginTop: "1rem" }}>
-    <label>Extracted PDF Text:</label>
-    <textarea value={pdfText} readOnly rows={6} className={styles.textarea} />
-  </div>
-)} */}
-          
-          <div className={styles.formGroup}>
-            <label>Nama Institusi <span style={{color:'red'}}>*</span></label>
-            <input type="text" className={styles.input} placeholder="Contoh: Universitas Brawijaya" value={institutionName} onChange={(e) => setInstitutionName(e.target.value)} />
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>Sejarah / Latar Belakang Institusi <span style={{color:'red'}}>*</span></label>
-            <textarea className={styles.textarea} placeholder="Ceritakan sejarah singkat, visi, atau misi institusi Anda..." value={institutionHistory} onChange={(e) => setInstitutionHistory(e.target.value)}></textarea>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>Tingkat Sekolah <span style={{color:'red'}}>*</span></label>
-            <select className={styles.select} value={schoolLevel} onChange={(e) => setSchoolLevel(e.target.value)}>
-              <option value="">-- Pilih Tingkat Sekolah --</option>
-              <option value="PreSchool">PreSchool</option>
-              <option value="TK">TK</option>
-              <option value="SD">SD</option>
-              <option value="SMP">SMP</option>
-              <option value="SMA">SMA</option>
-              <option value="SMK">SMK</option>
-              <option value="Perguruan Tinggi">Perguruan Tinggi</option>
-            </select>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>Program Studi / Gelar yang Ditawarkan <span style={{color:'#6c757d', fontWeight:'normal'}}>(Opsional)</span></label>
-            <input type="text" className={styles.input} placeholder="Contoh: S1 Informatika, S2 Manajemen..." value={offeredDegrees} onChange={(e) => setOfferedDegrees(e.target.value)} />
-          </div>
-          
-          <div className={styles.formGroup}>
-            <label>Upload File Logo Institut <span style={{color:'red'}}>*</span></label>
-            <input 
-              type="file" 
-              className={styles.input}
-              accept="image/*"
-              onChange={handleLogoChange}
-            />
-          </div>
-          {logoPreview && (
-  <div style={{ marginTop: "1rem" }}>
-    <img src={logoPreview} alt="Logo preview" style={{ width: "200px", height: "200px", borderRadius: "8px", objectFit: "contain" }} />
-  </div>
-)}
-
-          <div className={styles.formGroup}>
-            <label>Upload File Foto Lingkungan Institut<span style={{color:'red'}}>*</span></label>
-            <input 
-              type="file" 
-              className={styles.input}
-              accept="image/*"
-              onChange={handleEnvChange}
-            />
-          </div>
-          {envPreview && (
-  <div style={{ marginTop: "1rem" }}>
-    <img src={envPreview} alt="Environment preview" style={{ width: "200px", height: "200px", borderRadius: "8px", objectFit: "contain" }} />
-  </div>
-)}
-
-
-
-          <div className={styles.footerActions}>
-            <button className={styles.btnPrimary} onClick={handleNext}>Lanjut ke Creative Brief →</button>
-          </div>
-        </div>
+        <BusinessBrief
+          institutionName={institutionName}
+          setInstitutionName={setInstitutionName}
+          institutionHistory={institutionHistory}
+          setInstitutionHistory={setInstitutionHistory}
+          schoolLevel={schoolLevel}
+          setSchoolLevel={setSchoolLevel}
+          offeredDegrees={offeredDegrees}
+          setOfferedDegrees={setOfferedDegrees}
+          logoPreview={logoPreview}
+          envPreview={envPreview}
+          handleLogoChange={handleLogoChange}
+          handleEnvChange={handleEnvChange}
+          handleFileChange={handleFileChange}
+          handleNext={handleNext}
+          file={file}
+        />
       )}
 
-      {/* STEP 2: CREATIVE BRIEF */}
+      {/* STEP 2 */}
       {currentStep === 2 && (
-        <div className={styles.card}>
-          <h2>Creative Brief</h2>
-          <p className={styles.subtitle}>Tentukan tujuan pemasaran dan gaya penyampaian konten.</p>
-
-          <div className={styles.grid2}>
-            <div className={styles.formGroup}>
-              <label>Kebutuhan Konten (Event) <span style={{color:'red'}}>*</span></label>
-              <select className={styles.select} value={eventContent} onChange={(e) => setEventContent(e.target.value)}>
-                <option value="">-- Pilih Kebutuhan --</option>
-                <option value="Penerimaan Mahasiswa Baru">Penerimaan Mahasiswa Baru</option>
-                <option value="Dies Natalis / Ulang Tahun">Dies Natalis / Ulang Tahun</option>
-                <option value="Promosi Beasiswa">Promosi Beasiswa</option>
-                <option value="Pengenalan Kehidupan Kampus">Pengenalan Kehidupan Kampus (PKKMB)</option>
-              </select>
-            </div>
-              <div className={styles.formGroup}>
-                <label>
-                  Durasi Video <span style={{ color: "red" }}>*</span>
-                </label>
-
-                <select
-                  className={styles.select}
-                  value={videoDuration}
-                  onChange={(e) => setVideoDuration(e.target.value)}
-                >
-                  <option value="">-- Pilih Durasi --</option>
-                  <option value="Short (15 detik)">Short (15 detik)</option>
-                  <option value="Medium (30 detik)">Medium (30 detik)</option>
-                  <option value="Long (60 detik)">Long (60 detik)</option>
-                </select>
-              </div>
-          </div>
-          
-          <div className={styles.formGroup}>
-            <label>Tone of Voice (Gaya Bahasa Brand)</label>
-            <div className={styles.grid4} style={{marginBottom: '1rem'}}>
-              {Object.keys(keyMessageOptions).map((tone) => (
-                <div key={tone} className={`${styles.selectCard} ${toneOfVoice === tone ? styles.selected : ''}`} onClick={() => {setToneOfVoice(tone); setSelectedKeyMessage('');}}>
-                  <h4>{tone}</h4>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>Pilihan Pesan Utama (Key Message) <span style={{color:'red'}}>*</span></label>
-            <p style={{fontSize: '0.85rem', color: '#6c757d', marginBottom: '0.75rem'}}>Pilih salah satu pesan yang paling sesuai dengan target audiens Anda:</p>
-            {keyMessageOptions[toneOfVoice].map((msg, i) => (
-              <div key={i} className={`${styles.messageOption} ${selectedKeyMessage === msg ? styles.messageSelected : ''}`} onClick={() => setSelectedKeyMessage(msg)}>
-                <input type="radio" checked={selectedKeyMessage === msg} readOnly />
-                <span>{msg}</span>
-              </div>
-            ))}
-          </div>
-
-          <div className={styles.formGroup}>
-            <label>Specific Requirements / Prompt Tambahan <span style={{color:'#6c757d', fontWeight:'normal'}}>(Opsional)</span></label>
-            <textarea className={styles.textarea} placeholder="Contoh: Gunakan backsound yang energik, fokuskan visual pada fasilitas gedung A..." value={prompt} onChange={(e) => setPrompt(e.target.value)}></textarea>
-          </div>
-
-          <div className={styles.footerActions}>
-            <button className={styles.btnOutline} onClick={prevStep}>← Kembali</button>
-            <button className={styles.btnPrimary} onClick={handleNext}>Lanjut ke Tema Video →</button>
-          </div>
-        </div>
+        <CreativeBrief
+          eventContent={eventContent}
+          setEventContent={setEventContent}
+          toneOfVoice={toneOfVoice}
+          setToneOfVoice={setToneOfVoice}
+          selectedKeyMessage={selectedKeyMessage}
+          setSelectedKeyMessage={setSelectedKeyMessage}
+          videoDuration={videoDuration}
+          setVideoDuration={setVideoDuration}
+          prompt={prompt}
+          setPrompt={setPrompt}
+          handleNext={handleNext}
+          prevStep={prevStep} keyMessageOptions={keyMessageOptions}        />
       )}
 
-      {/* STEP 3: TEMA VIDEO */}
+      {/* STEP 3 */}
       {currentStep === 3 && (
-        <div className={styles.card}>
-          <h2>Pilih Tema Video</h2>
-          <p className={styles.subtitle}>Tentukan kerangka visual utama untuk video Anda.</p>
-          
-          <div className={styles.grid2}>
-            {videoThemes.map((theme) => (
-              <div key={theme.id} className={`${styles.selectCard} ${selectedTheme === theme.id ? styles.selected : ''}`} onClick={() => setSelectedTheme(theme.id)} style={{padding: '2rem', textAlign: 'left', alignItems: 'flex-start'}}>
-                <h3 style={{margin: '0 0 0.5rem 0', color: '#1a1a1a'}}>{theme.id}</h3>
-                <p style={{margin: 0, color: '#6c757d', lineHeight: '1.5'}}>{theme.desc}</p>
-              </div>
-            ))}
-          </div>
-
-          <div className={styles.footerActions}>
-            <button className={styles.btnGhost} onClick={prevStep}>← Kembali</button>
-            <button className={styles.btnPrimary} onClick={handleNext}>Lihat Ringkasan ✨</button>
-          </div>
-        </div>
+        <VideoTheme
+          selectedTheme={selectedTheme}
+          setSelectedTheme={setSelectedTheme}
+          handleNext={handleNext}
+          prevStep={prevStep} videoThemes={videoThemes}        />
       )}
 
-      {/* STEP 4: SUMMARY DENGAN TOGGLE EDIT */}
+      {/* STEP 4 */}
       {currentStep === 4 && (
-        <div className={styles.card}>
-          <div ref={briefRef} style={{backgroundColor: 'white', padding: '10px'}}>
-            <h2 style={{margin: '0 0 0.5rem 0'}}>Ringkasan Proyek</h2>
-            <p className={styles.subtitle}>Tinjau kembali konten Anda sebelum diproses oleh AI.</p>
-            
-            <div className={styles.infoBox}>
-              <p><b>Institusi:</b> {institutionName} - {schoolLevel} {offeredDegrees ? `(${offeredDegrees})` : ''}</p>
-              <p><b>Kebutuhan:</b> {eventContent} ({videoDuration})</p>
-              <p><b>Tema & Gaya:</b> {selectedTheme} / {toneOfVoice}</p>
-              <p><b>Pesan Utama:</b> "{selectedKeyMessage}"</p>
-              <p><b>Instruksi Tambahan:</b> {prompt}</p>
-            </div>
+        <ProjectSummary
+          briefRef={briefRef}
 
-            {/* IMAGES SECTION */}
-            <div className={styles.editHeader} style={{marginTop: '2rem'}}>
-              <h4>GAMBAR INSTITUSI</h4>
-            </div>
-            <div style={{display: 'flex', gap: '1rem', marginTop: '1rem', flexWrap: 'wrap', justifyContent: 'center'}}>
-              {logoPreview && (
-                <div style={{textAlign: 'center'}}>
-                  <p style={{margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#6c757d'}}>Logo Institut</p>
-                  <img src={logoPreview} alt="Logo preview" style={{width: '150px', height: '150px', borderRadius: '8px', border: '1px solid #ddd', objectFit: 'contain'}} />
-                </div>
-              )}
-              {envPreview && (
-                <div style={{textAlign: 'center'}}>
-                  <p style={{margin: '0 0 0.5rem 0', fontSize: '0.9rem', color: '#6c757d'}}>Foto Lingkungan</p>
-                  <img src={envPreview} alt="Environment preview" style={{width: '150px', height: '150px', borderRadius: '8px', border: '1px solid #ddd', objectFit: 'contain'}} />
-                </div>
-              )}
-            </div>
+          institutionName={institutionName}
+          schoolLevel={schoolLevel}
+          offeredDegrees={offeredDegrees}
 
-            {/* EDITABLE COPYWRITING */}
-            <div className={styles.editHeader}>
-              <h4>COPYWRITING CAPTION</h4>
-              {!isEditingCopywriting && (
-                <button className={styles.btnEdit} onClick={() => setIsEditingCopywriting(true)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg> Edit
-                </button>
-              )}
-            </div>
-            
-            {isEditingCopywriting ? (
-              <div>
-                <textarea className={styles.editableTextarea} value={editableCopywriting} onChange={(e) => setEditableCopywriting(e.target.value)}></textarea>
-                <button className={styles.btnSaveEdit} onClick={() => setIsEditingCopywriting(false)}>✓ Selesai</button>
-              </div>
-            ) : (
-              <div className={styles.textDisplay}>{editableCopywriting}</div>
-            )}
+          eventContent={eventContent}
+          videoDuration={videoDuration}
 
-            {/* EDITABLE HASHTAGS */}
-            <div className={styles.editHeader} style={{marginTop: '2rem'}}>
-              <h4>HASHTAGS</h4>
-              {!isEditingHashtags && (
-                <button className={styles.btnEdit} onClick={() => setIsEditingHashtags(true)}>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg> Edit
-                </button>
-              )}
-            </div>
+          selectedTheme={selectedTheme}
+          toneOfVoice={toneOfVoice}
 
-            {isEditingHashtags ? (
-              <div>
-                <input type="text" className={styles.hashtagInput} value={editableHashtags} onChange={(e) => setEditableHashtags(e.target.value)} />
-                <button className={styles.btnSaveEdit} onClick={() => setIsEditingHashtags(false)}>✓ Selesai</button>
-              </div>
-            ) : (
-              <div className={styles.textDisplay} style={{color: '#0d6efd', fontWeight: 500}}>{editableHashtags}</div>
-            )}
-            
-          </div>
+          selectedKeyMessage={selectedKeyMessage}
+          prompt={prompt}
 
-          <div className={styles.footerActions} style={{marginTop: '3rem'}}>
-            <button className={styles.btnGhost} onClick={prevStep}>← Edit Tema</button>
-            <button className={styles.btnOutline} onClick={handleExportPDF}>
-               <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" style={{marginRight: '6px', verticalAlign: 'middle'}}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-               Export ke PDF
-            </button>
-            <button className={styles.btnPrimary} onClick={handleGenerate} disabled={isGenerating}>
-              {isGenerating ? 'Memproses...' : 'Generate Storyboard 🚀'}
-            </button>
-          </div>
-        </div>
+          logoPreview={logoPreview}
+          envPreview={envPreview}
+
+          editableCopywriting={editableCopywriting}
+          setEditableCopywriting={setEditableCopywriting}
+
+          editableHashtags={editableHashtags}
+          setEditableHashtags={setEditableHashtags}
+
+          isEditingCopywriting={isEditingCopywriting}
+          setIsEditingCopywriting={setIsEditingCopywriting}
+
+          isEditingHashtags={isEditingHashtags}
+          setIsEditingHashtags={setIsEditingHashtags}
+
+          prevStep={prevStep}
+          handleExportPDF={handleExportPDF}
+          handleGenerate={handleGenerate}
+          isGenerating={isGenerating}
+        />
       )}
     </div>
   );

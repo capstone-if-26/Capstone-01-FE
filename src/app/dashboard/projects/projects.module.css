@@ -90,3 +90,168 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 .modalContent h3 { margin: 0 0 0.5rem 0; color: #1a1a1a; }
 .modalContent p { margin: 0; color: #6c757d; font-size: 0.95rem; }
+
+
+/* Individual upload card */
+.uploadCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.uploadCard h4 {
+  margin: 0;
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-bold);
+  color: var(--color-text-heading);
+}
+.uploadCard p {
+  margin: 0;
+  font-size: var(--text-caption);
+  color: var(--color-neutral-400);
+}
+
+/* Drop zone */
+.dropZone {
+  border: 2px dashed var(--color-neutral-200);
+  border-radius: var(--radius-md);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  cursor: pointer;
+  transition: var(--transition-normal);
+  background: var(--color-bg);
+  position: relative;
+  overflow: hidden;
+}
+.dropZone:hover {
+  border-color: var(--color-primary);
+  background: var(--color-primary-light);
+}
+.dropZone input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+.dropZoneIcon {
+  width: 36px;
+  height: 36px;
+  background: var(--color-primary-light);
+  border-radius: var(--radius-sm);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--color-primary);
+}
+.dropZoneText {
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  color: var(--color-neutral-600);
+  text-align: left;
+}
+.dropZoneHint {
+  font-size: 0.72rem;
+  color: var(--color-placeholder);
+  text-align: left;
+}
+.dropZoneTextGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+.dropZoneCompactLeft {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+}
+
+/* Image preview inside upload card */
+.uploadPreviewWrap {
+  position: relative;
+  border-radius: var(--radius-md);
+  overflow: hidden;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg);
+}
+.uploadPreviewImg {
+  width: 100%;
+  height: 160px;
+  object-fit: contain;
+  display: block;
+  padding: var(--space-2);
+}
+.uploadPreviewImgEnv {
+  width: 100%;
+  height: 130px;
+  object-fit: cover;
+  display: block;
+}
+.uploadPreviewChange {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: var(--color-overlay-bg);
+  color: var(--color-white);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  text-align: center;
+  padding: var(--space-1) var(--space-2);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+}
+.uploadPreviewChange input[type="file"] {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  cursor: pointer;
+  width: 100%;
+  height: 100%;
+}
+
+/* Optional file upload (doc/pdf) */
+.optionalUploadCard {
+  background: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+}
+.optionalBadge {
+  display: inline-block;
+  font-size: 0.68rem;
+  font-weight: var(--weight-bold);
+  color: var(--color-neutral-400);
+  background: var(--color-neutral-100);
+  border-radius: var(--radius-full);
+  padding: 0.15rem 0.55rem;
+  margin-left: var(--space-1);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-normal);
+}
+.fileChip {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  background: var(--color-primary-light);
+  border: 1px solid var(--color-blue-200);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-caption);
+  color: var(--color-blue-700);
+  font-weight: var(--weight-medium);
+}
