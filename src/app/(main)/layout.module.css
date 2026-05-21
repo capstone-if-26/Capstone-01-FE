@@ -1,101 +1,156 @@
 .dashboardContainer {
   display: flex;
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background-color: var(--color-bg);
 }
 
 .mainContent {
   flex: 1;
   display: flex;
   flex-direction: column;
-  margin-left: 260px;
+  margin-left: var(--sidebar-width);
+  min-width: 0; /* prevent flex overflow */
 }
 
+/* --- TOP HEADER --- */
 .topHeader {
   display: grid;
-  grid-template-columns: 1fr 2fr 1fr; /* Membagi header jadi 3 kolom */
+  grid-template-columns: 1fr 2fr 1fr; /* membagi header jadi 3 kolom */
   align-items: center;
-  padding: 1rem 2rem;
-  background-color: white;
-  border-bottom: 1px solid #e9ecef;
+  padding: var(--space-4) var(--space-8);
+  background-color: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
   position: sticky;
+  top: 0;
+  z-index: var(--z-sticky);
+  height: var(--topbar-height);
 }
 
 .headerLeft h3 {
   margin: 0;
-  font-size: 1.1rem;
-  color: #212529;
+  font-size: var(--text-body-lg);
+  color: var(--color-text-heading);
+  font-weight: var(--weight-bold);
 }
 
+/* --- SEARCH BAR --- */
 .searchBar {
   display: flex;
   align-items: center;
-  background-color: #f8f9fa;
-  border: 1px solid #ced4da;
-  border-radius: 8px;
-  padding: 0.5rem 1rem;
-  gap: 0.5rem;
+  background-color: var(--color-bg);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  padding: var(--space-2) var(--space-4);
+  gap: var(--space-2);
   max-width: 400px;
-  margin: 0 auto; /* Tengah */
+  margin: 0 auto; /* tengah */
+  transition: var(--transition-normal);
 }
-
+.searchBar:focus-within {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 3px var(--color-info-bg);
+}
 .searchBar input {
   border: none;
   background: transparent;
   outline: none;
   width: 100%;
-  font-size: 0.9rem;
+  font-size: var(--text-body-md);
+  color: var(--color-text);
+}
+.searchBar input::placeholder {
+  color: var(--color-placeholder);
 }
 
+/* --- PROFILE ACTIONS --- */
 .profileActions {
   display: flex;
   justify-content: flex-end;
-  gap: 1rem;
+  align-items: center;
+  gap: var(--space-4);
 }
 
 .iconButton {
   background: transparent;
   border: none;
-  color: #6c757d;
+  color: var(--color-neutral-400);
   cursor: pointer;
   display: flex;
   align-items: center;
   justify-content: center;
+  padding: var(--space-1);
+  border-radius: var(--radius-sm);
+  transition: var(--transition-fast);
 }
-
 .iconButton:hover {
-  color: #212529;
+  color: var(--color-text-heading);
+  background-color: var(--color-neutral-100);
 }
 
+/* --- CONTENT WRAPPER --- */
 .contentWrapper {
-  padding: 2.5rem;
+  padding: var(--space-10);
   overflow-y: auto;
+  flex: 1;
 }
 
-@media (max-width: 1024px) {
+/* ============================================================
+   RESPONSIVE
+   Tablet  : 640px – 1023px
+   Mobile  : max-width 639px
+   ============================================================ */
+
+/* --- Tablet --- */
+@media (max-width: 1023px) {
   .topHeader {
-    grid-template-columns: 1fr 1fr; /* Header jadi 2 kolom */
+    grid-template-columns: 1fr 1fr; /* header jadi 2 kolom */
   }
   .headerLeft {
-    display: none; /* Sembunyikan judul "Workspace" di tablet agar search bar muat */
+    display: none; /* sembunyikan judul "Workspace" di tablet agar search bar muat */
+  }
+  .contentWrapper {
+    padding: var(--space-6);
   }
 }
 
-@media (max-width: 768px) {
+/* --- Mobile --- */
+@media (max-width: 639px) {
   .dashboardContainer {
-    flex-direction: column; /* Tumpuk sidebar ke atas pada layar HP */
+    flex-direction: column; /* tumpuk sidebar ke atas pada layar mobile */
   }
-  .contentWrapper {
-    padding: 1.5rem; /* Kurangi jarak padding di HP */
+
+  /* Sidebar menjadi bottom nav -> hapus margin kiri */
+  .mainContent {
+    margin-left: auto;
+    padding-bottom: 72px; /* tinggi bottom nav bar */
   }
+
+  /* Header menjadi single row */
   .topHeader {
     display: flex;
-    flex-direction: column-reverse; /* Search bar di bawah icon profile pada HP */
-    gap: 1rem;
-    padding: 1rem;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    height: auto;
+    /*
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    */
+  }
+  .headerLeft {
+    display: none;
   }
   .searchBar {
+    flex: 1;
     width: 100%;
-    max-width: 100%;
+    margin: 0;
+  }
+  .profileActions {
+    flex-shrink: 0;
+    gap: var(--space-2);
+  }
+  .contentWrapper {
+    padding: var(--space-5) var(--space-4);
   }
 }

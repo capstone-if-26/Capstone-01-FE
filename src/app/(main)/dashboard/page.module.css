@@ -1,7 +1,7 @@
 .pageContainer {
   display: flex;
   flex-direction: column;
-  gap: 2rem;
+  gap: var(--space-8);
 }
 
 /* Hero Section */
@@ -9,252 +9,337 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
+  gap: var(--space-4);
+  flex-wrap: wrap;
 }
-
 .heroSection h1 {
-  margin: 0 0 0.5rem 0;
-  font-size: 1.8rem;
-  color: #1a1a1a;
+  margin: 0 0 var(--space-1) 0;
+  font-size: var(--text-h2);
+  color: var(--color-text-heading);
 }
-
 .heroSection p {
   margin: 0;
-  color: #6c757d;
+  color: var(--color-text-muted);
+  font-size: var(--text-body-md);
 }
 
 .primaryButton {
-  background-color: #0d6efd;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-white);
   border: none;
-  padding: 0.75rem 1.5rem;
-  border-radius: 50px;
-  font-weight: 600;
+  padding: var(--space-3) var(--space-6);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
-  display: inline-flex; 
+  display: inline-flex;
   align-items: center;
-  gap: 8px; 
-  text-decoration: none; 
-  cursor: pointer;
+  gap: var(--space-2);
+  text-decoration: none;
+  font-size: var(--text-body-md);
+  transition: var(--transition-normal);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+.primaryButton:hover {
+  background-color: var(--color-primary-hover);
+  text-decoration: none;
 }
 
 /* Stats Section */
 .statsSection {
-  display: flex;
-  gap: 1.5rem;
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: var(--space-6);
 }
-
 .statCard {
-  background-color: white;
-  padding: 1.5rem;
-  border-radius: 12px;
-  border: 1px solid #e9ecef;
-  flex: 1;
+  background-color: var(--color-surface);
+  padding: var(--space-6);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: var(--space-4);
+  box-shadow: var(--shadow-sm);
 }
-
 .statIconBlue {
-  background-color: #eff6ff;
+  background-color: var(--color-primary-light);
   width: 56px;
   height: 56px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-primary);
 }
-
 .statIconYellow {
-  background-color: #fef3c7;
+  background-color: var(--color-warning-bg);
   width: 56px;
   height: 56px;
-  border-radius: 12px;
+  border-radius: var(--radius-md);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+  color: var(--color-warning);
 }
-
 .statLabel {
-  font-size: 0.8rem;
-  color: #868e96;
-  margin: 0 0 0.25rem 0;
-  font-weight: 600;
+  font-size: var(--text-label);
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-1) 0;
+  font-weight: var(--weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: var(--tracking-wide);
 }
-
 .statValue {
-  font-size: 2rem;
+  font-size: var(--text-h2);
   margin: 0;
-  color: #212529;
+  color: var(--color-text-heading);
+  font-weight: var(--weight-extrabold);
+  font-family: var(--font-display);
+  line-height: var(--leading-tight);
 }
 
 /* Recent Content */
+.recentSection {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
 .sectionHeader {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 1rem;
 }
-
 .sectionHeader h3 {
   margin: 0;
-  color: #1a1a1a;
+  color: var(--color-text-heading);
+  font-size: var(--text-h4);
 }
-
 .viewAll {
-  color: #0d6efd;
+  color: var(--color-primary);
   text-decoration: none;
-  font-weight: 600;
-  font-size: 0.9rem;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-body-md);
+  transition: var(--transition-fast);
 }
-
+.viewAll:hover {
+  color: var(--color-primary-hover);
+  text-decoration: underline;
+}
 .gridContainer {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1.5rem;
+  gap: var(--space-6);
 }
-
 .contentCard {
-  background-color: white;
-  border-radius: 12px;
-  border: 1px solid #e9ecef;
+  background-color: var(--color-surface);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-border);
   overflow: hidden;
+  box-shadow: var(--shadow-sm);
+  transition: var(--transition-normal);
 }
-
+.contentCard:hover {
+  box-shadow: var(--shadow-md);
+}
 .thumbnailPlaceholder {
-  background-color: #212529; /* Gelap seperti gambar */
+  background-color: var(--color-neutral-800); /* gelap seperti gambar */
   height: 140px;
   position: relative;
 }
-
 .duration {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background-color: rgba(0,0,0,0.7);
-  color: white;
-  padding: 2px 6px;
-  border-radius: 4px;
-  font-size: 0.75rem;
+  bottom: var(--space-2);
+  right: var(--space-2);
+  background-color: var(--color-overlay-bg);
+  color: var(--color-white);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-xs);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-medium);
 }
-
 .contentCard h4 {
-  margin: 1rem;
-  font-size: 1rem;
-  color: #212529;
+  margin: var(--space-4);
+  font-size: var(--text-body-md);
+  color: var(--color-text-heading);
+  font-weight: var(--weight-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
-
 .cardFooter {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  padding: 0 1rem 1rem;
+  padding: 0 var(--space-4) var(--space-4);
 }
-
-.badgeGreen, .badgeYellow {
-  padding: 4px 10px;
-  border-radius: 20px;
-  font-size: 0.75rem;
-  font-weight: 600;
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.badgeGreen {
-  background-color: #e6f4ea;
-  color: #137333;
-}
-
+.badgeGreen, 
 .badgeYellow {
-  background-color: #fef7e0;
-  color: #b06000;
+  padding: 3px var(--space-2);
+  border-radius: var(--radius-full);
+  font-size: var(--text-caption);
+  font-weight: var(--weight-semibold);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-1);
 }
-
+.badgeGreen {
+  background-color: var(--color-success-bg);
+  color: var(--color-success);
+}
+.badgeYellow {
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+}
 .dot {
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   background-color: currentColor;
+  flex-shrink: 0;
 }
-
 .time {
-  font-size: 0.8rem;
-  color: #adb5bd;
+  font-size: var(--text-caption);
+  color: var(--color-placeholder);
 }
 
 /* Bottom Widgets */
 .bottomWidgets {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
+  gap: var(--space-6);
 }
-
 .tipsCard {
-  background-color: #2563eb; /* Biru terang */
-  color: white;
-  padding: 2rem;
-  border-radius: 16px;
+  background-color: var(--color-primary);
+  color: var(--color-white);
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
 }
-
 .tipsCard h3 {
-  margin: 0 0 1rem 0;
+  margin: 0 0 var(--space-4) 0;
+  color: var(--color-white);
+  font-size: var(--text-h4);
 }
-
 .tipsCard p {
-  color: #bfdbfe;
-  line-height: 1.6;
-  margin-bottom: 1.5rem;
-  font-size: 0.95rem;
+  color: var(--color-blue-200);
+  line-height: var(--leading-relaxed);
+  margin-bottom: var(--space-6);
+  font-size: var(--text-body-md);
 }
-
 .outlineButton {
   background: transparent;
-  color: white;
-  border: 1px solid rgba(255,255,255,0.4);
-  padding: 0.5rem 1.25rem;
-  border-radius: 50px;
+  color: var(--color-white);
+  border: 1px solid rgba(255, 255, 255, 0.4);
+  padding: var(--space-2) var(--space-5);
+  border-radius: var(--radius-full);
   cursor: pointer;
-  font-weight: 500;
-  transition: background 0.2s;
+  font-weight: var(--weight-medium);
+  font-size: var(--text-body-md);
+  transition: var(--transition-normal);
 }
-
 .outlineButton:hover {
-  background: rgba(255,255,255,0.1);
+  background: rgba(255, 255, 255, 0.12);
 }
-
 .templateWidget {
-  background-color: white;
-  padding: 2rem;
-  border-radius: 16px;
-  border: 1px solid #e9ecef;
+  background-color: var(--color-surface);
+  padding: var(--space-8);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-border);
+  box-shadow: var(--shadow-sm);
 }
-
 .templateWidget h3 {
-  margin: 0 0 1.5rem 0;
-  color: #1a1a1a;
+  margin: 0 0 var(--space-6) 0;
+  color: var(--color-text-heading);
+  font-size: var(--text-h4);
 }
-
 .templateGrid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1rem;
+  gap: var(--space-4);
 }
-
 .templateItem {
-  border: 1px solid #e9ecef;
-  padding: 1rem;
-  border-radius: 12px;
-  background-color: #f8f9fa;
+  border: 1px solid var(--color-border);
+  padding: var(--space-4);
+  border-radius: var(--radius-md);
+  background-color: var(--color-bg);
+  transition: var(--transition-normal);
 }
-
+.templateItem:hover {
+  border-color: var(--color-primary);
+  background-color: var(--color-primary-light);
+}
 .templateItem h4 {
-  margin: 0 0 0.25rem 0;
-  color: #0d6efd;
-  font-size: 0.9rem;
+  margin: 0 0 var(--space-1) 0;
+  color: var(--color-primary);
+  font-size: var(--text-body-md);
+  font-weight: var(--weight-semibold);
 }
-
 .templateItem p {
   margin: 0;
-  color: #868e96;
-  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  font-size: var(--text-caption);
+}
+
+/* ───── RESPONSIVE ───── */
+ 
+/* Tablet: 640px – 1023px */
+@media (max-width: 1023px) {
+  .gridContainer {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* Mobile: < 640px */
+@media (max-width: 639px) {
+  .pageContainer {
+    gap: var(--space-6);
+  }
+ 
+  /* Hero: stack vertikal, tombol full width */
+  .heroSection {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .heroSection h1 {
+    font-size: var(--text-h3);
+  }
+  .primaryButton {
+    width: 100%;
+    justify-content: center;
+  }
+ 
+  /* Stats: 1 kolom */
+  .statsSection {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+  .statCard {
+    padding: var(--space-4);
+  }
+  .statValue {
+    font-size: var(--text-h3);
+  }
+ 
+  /* Content grid: 1 kolom */
+  .gridContainer {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
+ 
+  /* Bottom widgets: stack */
+  .bottomWidgets {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+  }
+  .tipsCard,
+  .templateWidget {
+    padding: var(--space-6);
+  }
+ 
+  /* Template grid: 1 kolom */
+  .templateGrid {
+    grid-template-columns: 1fr;
+    gap: var(--space-3);
+  }
 }

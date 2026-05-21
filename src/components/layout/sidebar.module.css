@@ -1,3 +1,4 @@
+/* --- Desktop Sidebar ---*/
 .sidebar {
   width: 260px;
   background-color: white;
@@ -5,9 +6,10 @@
   top: 0;
   left: 0;
   height: 100vh;
-
   display: flex;
   flex-direction: column;
+  border-right: 1px solid #e9ecef;
+  z-index: 200;
 }
 
 .logoContainer {
@@ -20,6 +22,7 @@
 .logoIcon {
   display: flex;
   align-items: center;
+  flex-shrink: 0;
 }
 
 .logoContainer h2 {
@@ -37,6 +40,7 @@
 
 .navigation {
   flex: 1;
+  overflow-y: auto;
 }
 
 .navigation ul {
@@ -66,7 +70,7 @@
 }
 
 .active {
-  background-color: #eff6ff; /* Biru sangat muda */
+  background-color: #eff6ff; /* biru sangat muda */
 }
 
 .active a {
@@ -74,6 +78,7 @@
   font-weight: 600;
 }
 
+/* --- Desktop User Profile at Bottom ---*/
 .userProfile {
   margin-top: auto;
   padding: 1rem 1.5rem;
@@ -93,6 +98,7 @@
   align-items: center;
   justify-content: center;
   font-weight: bold;
+  flex-shrink: 0;
 }
 
 .userInfo p {
@@ -110,26 +116,96 @@
   color: #868e96;
 }
 
+/* --- Mobile: Bottom Navigation Bar --- */
 @media (max-width: 768px) {
+  /* responsive as a bottom bar */
   .sidebar {
-    width: 100%; /* Lebar penuh di HP */
+    width: 100%; /* lebar penuh di HP */
+    height: auto;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
     border-right: none;
-    border-bottom: 1px solid #e9ecef;
-    padding: 1rem;
+    border-top: 1px solid #e9ecef;
+    flex-direction: row;
+    align-items: stretch;
+    padding: 0;
+    z-index: 300; /* ensure it sits above page content */
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.06);
+  }
+
+  .logoContainer {
+    display: none; /* hide logo on mobile */
+  }
+
+  /* nav fills all available horizontal space */
+  .navigation {
+    flex: 1;
+    overflow: visible;
   }
   
   .navigation ul {
-    display: flex; /* Jadikan menu berjejer horizontal bisa di-scroll */
-    overflow-x: auto;
-    padding-bottom: 0.5rem;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    height: 100%;
+    padding: 0;
+    margin: 0;
   }
   
+  /* each tab takes equal width */
   .navigation li {
-    margin: 0 0.5rem 0 0;
-    white-space: nowrap; /* Jangan biarkan teks turun ke bawah */
+    flex: 1;
+    margin: 0;
+    border-radius: 0;
+    display: flex;
+    align-items: stretch;
+  }
+
+  .navigation li a {
+    flex: 1;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    padding: 0.6rem 0.25rem;
+    font-size: 0.68rem;
+    font-weight: 500;
+    color: #868e96;
+    text-align: center;
+  }
+
+  .navigation li a svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .navigation li:hover {
+    background-color: #f8f9fa;
+  }
+
+  .active {
+    background-color: transparent;
+  }
+
+  .active a {
+    color: #0d6efd;
+    font-weight: 700;
+  }
+
+  /* indicator dot on active tab */
+  .active a::after {
+    content: '';
+    display: block;
+    width: 4px;
+    height: 4px;
+    border-radius: 50%;
+    background-color: #0d6efd;
+    margin: 0 auto;
   }
   
   .userProfile {
-    display: none; /* Sembunyikan profil di sidebar HP untuk menghemat ruang */
+    display: none; /* hide desktop user profile */
   }
 }

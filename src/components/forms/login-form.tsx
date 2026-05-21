@@ -116,6 +116,7 @@ const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
                 Email
               </label>
               <input
+                suppressHydrationWarning
                 id="email"
                 name="email"
                 type="email"
@@ -139,6 +140,7 @@ const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
               </div>
               <div className={styles.passwordWrapper}>
                 <input
+                  suppressHydrationWarning
                   id="password"
                   name="password"
                   type={showPassword ? "text" : "password"}
@@ -195,7 +197,11 @@ const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
             </div>
 
             {/* Google Button */}
-            <button className={styles.btnGoogle} onClick={handleGoogleLogin}>
+            <button 
+              suppressHydrationWarning
+              className={styles.btnGoogle} 
+              onClick={handleGoogleLogin}
+            >
               <svg width="20" height="20" viewBox="0 0 20 20" fill="none">
                 <path
                   d="M19.6 10.23c0-.68-.06-1.36-.18-2H10v3.79h5.39a4.6 4.6 0 01-2 3.02v2.5h3.23c1.89-1.74 2.98-4.3 2.98-7.31z"

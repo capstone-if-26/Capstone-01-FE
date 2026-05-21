@@ -73,14 +73,17 @@ export default function DashboardPage() {
 
       {/* Bottom Widgets */}
       <section className={styles.bottomWidgets}>
-        {/* Widget Kiri: Tips */}
+        {/* Widget Tips */}
         <div className={styles.tipsCard}>
-          <h3 style={{ color: 'white' }}>Tips Hari Ini 💡</h3>
-          <p>Gunakan prompt yang spesifik untuk mendapatkan detail video yang lebih tajam. Coba tambahkan kata kunci seperti 'cinematic lighting' atau '4k resolution'.</p>
+          <h3>Tips Hari Ini 💡</h3>
+          <p>
+            Gunakan prompt yang spesifik untuk mendapatkan detail video yang lebih tajam. 
+            Coba tambahkan kata kunci seperti &apos;cinematic lighting&apos; atau &apos;4k resolution&apos;.
+          </p>
           <button className={styles.outlineButton}>Lihat Panduan Prompt</button>
         </div>
 
-        {/* Widget Kanan: Templates */}
+        {/* Widget Templates */}
         <div className={styles.templateWidget}>
           <h3>Template Terpopuler</h3>
           <div className={styles.templateGrid}>

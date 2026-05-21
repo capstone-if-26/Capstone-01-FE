@@ -422,7 +422,7 @@ function StoryboardContent() {
               </button>
             </div>
           )}
-  {/* this need preprocessing data video to show the video result in Frontend (example : encoded mp4 from supabase bucket) */}
+
           {!isRendering && !renderError && videoURL && (
             <div className={styles.resultContainer}>
               <div className={styles.videoPlayer}>

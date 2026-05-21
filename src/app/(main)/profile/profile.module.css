@@ -3,44 +3,42 @@
   margin: 0 auto;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-6);
 }
 
+/* --- Header --- */
 .header {
-  margin-bottom: 1rem;
+  margin-bottom: var(--space-4);
 }
-
 .header h1 {
-  font-size: 2rem;
-  color: #1a1a1a;
-  margin: 0 0 0.5rem 0;
+  font-size: var(--text-h2);
+  margin: 0 0 var(--space-2) 0;
 }
-
 .header p {
-  color: #6c757d;
+  color: var(--color-text-muted);
   margin: 0;
 }
 
-/* Profile Summary Card */
+/* --- Profile Summary Card --- */
 .summaryCard {
-  background-color: white;
-  border: 1px solid #e9ecef;
-  border-radius: 16px;
-  padding: 1.5rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-6);
   display: flex;
   align-items: center;
-  gap: 1.5rem;
+  gap: var(--space-6);
 }
 
 .avatarWrapper {
   position: relative;
   width: 80px;
   height: 80px;
-  border-radius: 16px;
-  background-color: #f8f9fa;
+  border-radius: var(--radius-lg);
   overflow: hidden;
+  background-color: var(--color-neutral-100);
+  flex-shrink: 0;
 }
-
 .avatarWrapper img {
   width: 100%;
   height: 100%;
@@ -51,116 +49,132 @@
   position: absolute;
   bottom: -5px;
   right: -5px;
-  background-color: #0d6efd;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-surface);
   width: 28px;
   height: 28px;
-  border-radius: 50%;
+  border-radius: var(--radius-full);
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid white;
+  border: 2px solid var(--color-surface);
   cursor: pointer;
+  transition: var(--transition-fast);
+}
+.editAvatarBtn:hover {
+  background-color: var(--color-primary-hover);
 }
 
 .userInfo h2 {
-  margin: 0 0 0.25rem 0;
+  margin: 0 0 var(--space-1) 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+.userInfo p {
+  color: var(--color-text-muted);
+  margin: 0 0 var(--space-4) 0;
+  font-size: var(--text-body-md);
 }
 
 .badgePro {
-  background-color: #fef3c7;
-  color: #d97706;
-  font-size: 0.7rem;
-  padding: 2px 8px;
-  border-radius: 50px;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-}
-
-.userInfo p {
-  color: #6c757d;
-  margin: 0 0 1rem 0;
-  font-size: 0.95rem;
+  background-color: var(--color-warning-bg);
+  color: var(--color-warning);
+  font-size: var(--text-label);
+  padding: 2px var(--space-2);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-bold);
+  letter-spacing: var(--tracking-wide);
+  white-space: nowrap;
 }
 
 .actionButtons {
   display: flex;
-  gap: 0.75rem;
+  gap: var(--space-3);
+  flex-wrap: wrap;
 }
 
 .btnPrimary {
-  background-color: #0d6efd;
-  color: white;
+  background-color: var(--color-primary);
+  color: var(--color-surface);
   border: none;
-  padding: 0.5rem 1rem;
-  border-radius: 50px;
-  font-weight: 600;
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--text-body-md);
+  transition: var(--transition-normal);
+}
+.btnPrimary:hover {
+  background-color: var(--color-primary-hover);
 }
 
 .btnSecondary {
-  background-color: #f8f9fa;
-  color: #495057;
-  border: 1px solid #ced4da;
-  padding: 0.5rem 1rem;
-  border-radius: 50px;
-  font-weight: 600;
+  background-color: var(--color-bg);
+  color: var(--color-text);
+  border: 1px solid var(--color-border);
+  padding: var(--space-2) var(--space-4);
+  border-radius: var(--radius-full);
+  font-weight: var(--weight-semibold);
   cursor: pointer;
-  font-size: 0.85rem;
+  font-size: var(--text-body-md);
+  transition: var(--transition-fast);
+}
+.btnSecondary:hover {
+  border-color: var(--color-placeholder);
 }
 
-/* Personal Info Form */
+/* --- Form Card --- */
 .formCard {
-  background-color: white;
-  border: 1px solid #e9ecef;
-  border-radius: 16px;
-  padding: 2rem;
+  background-color: var(--color-surface);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg);
+  padding: var(--space-8);
 }
-
 .formCard h3 {
-  margin: 0 0 1.5rem 0;
-  color: #1a1a1a;
+  margin: 0 0 var(--space-6) 0;
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: var(--space-2);
 }
 
 .grid2 {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  gap: var(--space-6);
+  margin-bottom: var(--space-6);
 }
 
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+}
 .formGroup label {
-  display: block;
-  font-weight: 600;
-  font-size: 0.85rem;
-  margin-bottom: 0.5rem;
-  color: #212529;
+  font-weight: var(--weight-semibold);
+  font-size: var(--text-body-md);
+  color: var(--color-text-heading);
 }
 
-.input, .textarea {
-  width: 100%;
-  padding: 0.75rem 1rem;
-  border: 1px solid #ced4da;
-  border-radius: 8px;
-  font-size: 0.95rem;
-  background-color: #f8f9fa;
-  color: #495057;
+.input,
+.textarea {
+  padding: var(--space-3) var(--space-4);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  font-size: var(--text-body-md);
+  background-color: var(--color-bg);
+  color: var(--color-text);
   outline: none;
-  transition: border-color 0.2s;
+  transition: var(--transition-fast);
+  box-sizing: border-box;
 }
-
-.input:focus, .textarea:focus {
-  border-color: #0d6efd;
-  background-color: white;
+.input:focus,
+.textarea:focus {
+  border-color: var(--color-primary);
+  background-color: var(--color-surface);
+  box-shadow: 0 0 0 3px var(--color-info-bg);
 }
-
 .textarea {
   min-height: 100px;
   resize: vertical;
@@ -169,11 +183,38 @@
 .footerActions {
   display: flex;
   justify-content: flex-end;
-  margin-top: 2rem;
+  margin-top: var(--space-8);
 }
 
-@media (max-width: 768px) {
-  .grid2 { grid-template-columns: 1fr; }
-  .summaryCard { flex-direction: column; text-align: center; }
+/* ================ RESPONSIVE ================ */
+
+/* --- Mobile --- */
+@media (max-width: 639px) {
+  .grid2 {
+    grid-template-columns: 1fr;
+    gap: var(--space-4);
+    margin-bottom: var(--space-4);
+  }
+ 
+  .summaryCard {
+    flex-direction: column;
+    text-align: center;
+    align-items: center;
+    padding: var(--space-5);
+  }
+  .userInfo h2 { justify-content: center; }
+  .userInfo p  { text-align: center; }
   .actionButtons { justify-content: center; }
+ 
+  .formCard { padding: var(--space-5); }
+ 
+  .footerActions { justify-content: stretch; }
+  .footerActions .btnPrimary {
+    width: 100%;
+    justify-content: center;
+    padding: var(--space-3) var(--space-4);
+    font-size: var(--text-body-lg);
+  }
 }
+
+/* --- Tablet --- */
