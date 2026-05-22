@@ -81,9 +81,9 @@ export default function CreativeBrief({
             onChange={(e) => setVideoDuration(e.target.value)}
           >
             <option value="">-- Pilih Durasi --</option>
-            <option value="Short (15 detik)">Short (15 detik)</option>
-            <option value="Medium (30 detik)">Medium (30 detik)</option>
-            <option value="Long (60 detik)">Long (60 detik)</option>
+            <option value="Short (4 detik)">Short (4 detik)</option>
+            <option value="Medium (6 detik)">Medium (6 detik)</option>
+            <option value="Long (8 detik)">Long (8 detik)</option>
           </select>
         </div>
       </div>

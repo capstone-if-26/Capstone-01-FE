@@ -46,3 +46,8 @@ export const deleteAccount = async () => {
   const response = await api.delete("/api/auth/account");
   return response.data;
 };
+
+export const getAllUsers = async () => {
+  const response = await api.get("/api/admin/users");
+  return response.data;
+};

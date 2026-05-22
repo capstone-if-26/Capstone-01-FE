@@ -13,6 +13,7 @@ import ProjectSummary from "./components/summary";
 
 // Pastikan getProjectById sudah ditambahkan di project.service.ts Anda
 import { initializeProject, getProjectById } from '@/services/project.service';
+import videoService from '@/services/video.service';
 
 // --- DATA DUMMY & OPTIONS ---
 const keyMessageOptions: Record<string, string[]> = {
@@ -62,8 +63,11 @@ function NewProjectContent() {
   const [currentStep, setCurrentStep] = useState(1);
   const [isGenerating, setIsGenerating] = useState(false);
   const briefRef = useRef<HTMLDivElement>(null);
+  const [savedProjectId, setSavedProjectId] = useState<string>('');
+  const [savedStoryboardId, setSavedStoryboardId] = useState<string>('');
 
   // ================= STATES: BUSINESS & CREATIVE BRIEF =================
+  const [projectName, setProjectName] = useState('');
   const [institutionName, setInstitutionName] = useState('');
   const [institutionHistory, setInstitutionHistory] = useState('');
   const [offeredDegrees, setOfferedDegrees] = useState('');
@@ -108,27 +112,61 @@ function NewProjectContent() {
           const res = await getProjectById(projectId);
           if (res.success && res.data) {
             const data = res.data;
-            
+            const bb = data.business_briefs?.[0] || {};
+            const cb = bb.creative_briefs?.[0] || {};
+
             // 1. Isi form text dengan data dari database
-            // (Kita pakai "||" untuk jaga-jaga jika backend memakai nama variabel yang berbeda)
-            if (data.name || data.institution_name) setInstitutionName(data.name || data.institution_name || '');
-            if (data.description || data.institution_history) setInstitutionHistory(data.description || data.institution_history || '');
-            if (data.theme || data.selected_theme) setSelectedTheme(data.theme || data.selected_theme || '');
+            if (data.name) setProjectName(data.name);
+            if (bb.institution_name || data.institution_name || data.name) setInstitutionName(bb.institution_name || data.institution_name || data.name || '');
+            if (data.description || bb.institution_history || data.institution_history) setInstitutionHistory(data.description || bb.institution_history || data.institution_history || '');
+            if (data.theme || cb.theme || data.selected_theme) setSelectedTheme(data.theme || cb.theme || data.selected_theme || '');
             
-            if (data.event_content) setEventContent(data.event_content);
-            if (data.tone_of_voice) setToneOfVoice(data.tone_of_voice);
-            if (data.selected_key_message) setSelectedKeyMessage(data.selected_key_message);
-            if (data.prompt) setPrompt(data.prompt);
-            if (data.video_duration) setVideoDuration(data.video_duration);
-            if (data.school_level) setSchoolLevel(data.school_level);
-            if (data.offered_degrees) setOfferedDegrees(data.offered_degrees);
+            if (cb.event_content || data.event_content) setEventContent(cb.event_content || data.event_content);
+            if (cb.tone_of_voice || data.tone_of_voice) setToneOfVoice(cb.tone_of_voice || data.tone_of_voice);
+            if (cb.key_message || data.selected_key_message) setSelectedKeyMessage(cb.key_message || data.selected_key_message);
+            if (cb.prompt || data.prompt) setPrompt(cb.prompt || data.prompt);
+            if (cb.video_duration || data.video_duration) setVideoDuration(cb.video_duration || data.video_duration);
+            if (bb.school_level || data.school_level) setSchoolLevel(bb.school_level || data.school_level);
+            if (bb.offered_degrees || data.offered_degrees) setOfferedDegrees(bb.offered_degrees || data.offered_degrees);
 
             // 2. Isi form gambar dengan URL dari Supabase / Backend
-            if (data.logo_url) setLogoPreview(data.logo_url);
-            if (data.env_url) setEnvPreview(data.env_url);
+            if (bb.logo_path || data.logo_url) setLogoPreview(bb.logo_path || data.logo_url);
+            if (bb.environment_path || data.env_url) setEnvPreview(bb.environment_path || data.env_url);
             
-            // Langsung lompat ke Step 4 (Ringkasan)
-            setCurrentStep(4);
+            setSavedProjectId(data.id || projectId);
+
+            // Cek apakah storyboard sudah ada
+            if (data.storyboard && data.storyboard.id) {
+              setSavedStoryboardId(data.storyboard.id);
+              if (data.storyboard.sections && data.storyboard.sections.length > 0) {
+                 setScenes(data.storyboard.sections.map((sec: any, index: number) => {
+                  let parsedNarration = sec.content;
+                  let parsedVisual = `Visual sesuai ${data.theme || 'Tren & Gaya Hidup Cepat'}`;
+                  try {
+                    const parsed = JSON.parse(sec.content);
+                    if (parsed.narration) parsedNarration = parsed.narration;
+                    if (parsed.visual) parsedVisual = parsed.visual;
+                  } catch (e) {
+                    // Not JSON, use default fallback
+                  }
+                  return {
+                    id: `0${index + 1}`,
+                    time: '00:00:00', 
+                    title: `${index + 1}. ${sec.section_type}`,
+                    duration: `00:0${sec.duration}`,
+                    status: 'Ready',
+                    narration: parsedNarration,
+                    visual: parsedVisual,
+                    isEditing: false
+                  };
+                }));
+              }
+              // Langsung lompat ke Step 5 (Storyboard)
+              setCurrentStep(5);
+            } else {
+              // Langsung lompat ke Step 4 (Ringkasan)
+              setCurrentStep(4);
+            }
           }
         } catch (error) {
           console.error("Gagal memuat detail project:", error);
@@ -153,10 +191,21 @@ function NewProjectContent() {
     const institutionLine = findLine(['nama institusi', 'nama kampus', 'kampus', 'universitas', 'institut']);
     const historyLine = findLine(['sejarah', 'latar belakang', 'asal usul', 'berdiri']);
     const degreeLine = findLine(['program studi', 'prodi', 'fakultas', 'jurusan']);
+    const levelLine = findLine(['tingkat sekolah', 'jenjang pendidikan', 'jenjang']);
 
     if (!institutionName && institutionLine) setInstitutionName(parseLabelLine(institutionLine));
     if (!institutionHistory && historyLine) setInstitutionHistory(parseLabelLine(historyLine));
     if (!offeredDegrees && degreeLine) setOfferedDegrees(parseLabelLine(degreeLine));
+    if (!schoolLevel && levelLine) {
+      const parsedLevel = parseLabelLine(levelLine);
+      const levels = ["PreSchool", "TK", "SD", "SMP", "SMA", "SMK", "Perguruan Tinggi"];
+      const matched = levels.find(l => parsedLevel.toLowerCase().includes(l.toLowerCase()));
+      if (matched) {
+        setSchoolLevel(matched);
+      } else {
+        setSchoolLevel(parsedLevel);
+      }
+    }
   };
 
   const extractDocxText = async (file: File) => {
@@ -293,6 +342,8 @@ function NewProjectContent() {
     setIsGenerating(true);
 
     const payload = {
+      project_id: projectId || "",
+      project_name: projectName,
       institution_name: institutionName,
       institution_history: institutionHistory,
       school_level: schoolLevel,
@@ -312,9 +363,14 @@ function NewProjectContent() {
 
     try {
       // 1. Tembak API Backend (Bisa Error jika token belum ada/expired)
-      await withTimeout(initializeProject(payload), 10000).catch(e => {
-        console.warn("API Backend gagal atau timeout. Melanjutkan ke Storyboard lokal.");
-      });
+      await withTimeout(initializeProject(payload), 10000)
+        .then((res: any) => {
+          if (res?.data?.project_id) setSavedProjectId(res.data.project_id);
+          if (res?.data?.storyboard_id) setSavedStoryboardId(res.data.storyboard_id);
+        })
+        .catch(e => {
+          console.warn("API Backend gagal atau timeout. Melanjutkan ke Storyboard lokal.");
+        });
 
       // 2. Siapkan data Naskah Storyboard
       const dynamicScenes: Scene[] = [
@@ -365,21 +421,66 @@ function NewProjectContent() {
   // ================= FUNGSI STEP 5 (EDIT SCENE & RENDER) =================
   const toggleEditScene = (id: string) => setScenes((prev) => prev.map(s => s.id === id ? { ...s, isEditing: !s.isEditing } : s));
   const handleSceneChange = (id: string, field: 'narration' | 'visual', value: string) => setScenes((prev) => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
+  
+  const isRenderingRef = useRef(false);
 
-  const handleFinalRender = () => {
+  const handleFinalRender = async () => {
+    if (isRenderingRef.current) return;
+    isRenderingRef.current = true;
     setIsRendering(true);
-    setRenderProgress(0);
-    const interval = setInterval(() => {
-      setRenderProgress((prev) => {
-        if (prev >= 100) { 
-          clearInterval(interval); 
-          setIsRendering(false); 
-          setIsFinished(true); 
-          return 100; 
-        }
-        return prev + 15;
+    setRenderProgress(10);
+    
+    try {
+      const pid = savedProjectId || projectId;
+      if (!pid || !savedStoryboardId) {
+        alert("Gagal memproses, ID Proyek atau Storyboard tidak ditemukan.");
+        setIsRendering(false);
+        isRenderingRef.current = false;
+        return;
+      }
+
+      // 1. Memanggil endpoint generate video backend
+      const res = await videoService.generateVideo({
+        project_id: pid,
+        storyboard_id: savedStoryboardId,
+        custom_prompt: prompt
       });
-    }, 400);
+      
+      const videoId = (res.data as any).video_id;
+      if (!videoId) {
+        throw new Error("Video ID tidak ditemukan di respons backend");
+      }
+
+      // 2. Polling progress dengan batas maksimum tertentu
+      let currentProgress = 15;
+      const progressInterval = setInterval(() => {
+        setRenderProgress(prev => Math.min(prev + 5, 85));
+      }, 3000);
+
+      await videoService.pollUntilComplete(
+        videoId,
+        (status) => {
+           console.log("Status video saat ini:", status.status);
+           if (status.status === "stitching_video") {
+              setRenderProgress(90);
+           }
+        },
+        5000, 
+        120 
+      );
+      
+      clearInterval(progressInterval);
+      setRenderProgress(100);
+      setIsRendering(false);
+      isRenderingRef.current = false;
+      setIsFinished(true);
+
+    } catch (err: any) {
+      console.error("Gagal melakukan render final:", err);
+      alert(err?.response?.data?.message || "Terjadi kesalahan saat memproses video di backend.");
+      setIsRendering(false);
+      isRenderingRef.current = false;
+    }
   };
 
   return (
@@ -409,6 +510,7 @@ function NewProjectContent() {
       {/* STEP 1: BUSINESS BRIEF */}
       {currentStep === 1 && (
         <BusinessBrief
+          projectName={projectName} setProjectName={setProjectName}
           institutionName={institutionName} setInstitutionName={setInstitutionName}
           institutionHistory={institutionHistory} setInstitutionHistory={setInstitutionHistory}
           schoolLevel={schoolLevel} setSchoolLevel={setSchoolLevel}
@@ -507,9 +609,9 @@ function NewProjectContent() {
           ) : isFinished ? (
             <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: '#e6f4ea', borderRadius: '12px', border: '1px solid #c3e6cb' }}>
               <h3 style={{ color: '#137333', margin: '0 0 0.5rem 0' }}>✨ Video Berhasil Dibuat!</h3>
-              <p style={{ color: '#155724', margin: '0 0 1.5rem 0', fontSize: '0.9rem' }}>Video marketing Anda sudah siap diunduh atau dilihat di Library.</p>
+              <p style={{ color: '#155724', margin: '0 0 1.5rem 0', fontSize: '0.9rem' }}>Video marketing Anda sudah siap diunduh atau diputar.</p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
-                <button style={{ backgroundColor: '#0d6efd', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '50px', fontWeight: 600, cursor: 'pointer' }} onClick={() => router.push('/library')}>Ke Library</button>
+                <button style={{ backgroundColor: '#0d6efd', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '50px', fontWeight: 600, cursor: 'pointer' }} onClick={() => { window.location.href = `/preview/${savedProjectId || projectId}`; }}>Preview & Download Video</button>
               </div>
             </div>
           ) : (

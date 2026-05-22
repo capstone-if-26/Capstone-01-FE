@@ -246,7 +246,10 @@ function StoryboardContent() {
       startPolling(foundVariantId);
     } catch (err: any) {
       console.error("[Render] FAILED:", err);
-      setRenderError(err?.message || "Gagal memulai proses render video.");
+      // Extraksi pesan spesifik dari backend (GORM/Handler error)
+      const backendMessage = err?.response?.data?.message || err?.message || "Gagal memulai proses render video.";
+      console.error("Backend Error Details:", err?.response?.data);
+      setRenderError(`Backend Error: ${backendMessage}`);
       setIsRendering(false);
       setRenderProgress(0);
     }
@@ -303,6 +306,21 @@ function StoryboardContent() {
               Project: <b>{projectMeta.title}</b> &bull; {projectMeta.duration}
             </p>
           </header>
+
+          <div className={styles.timelineVisualizer}>
+            <div className={styles.timelineTrack}></div>
+            {scenes.map((scene, idx) => (
+              <div 
+                key={`tl-${scene.id}`} 
+                className={styles.timelineNode}
+                style={{ left: `${(idx / (scenes.length - 1 || 1)) * 100}%` }}
+                title={scene.title}
+              >
+                <div className={styles.timelinePoint}></div>
+                <span className={styles.timelineLabel}>{scene.id}</span>
+              </div>
+            ))}
+          </div>
 
           <div className={styles.timeline}>
             {scenes.map((scene) => (

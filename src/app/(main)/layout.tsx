@@ -1,6 +1,8 @@
 import React from 'react';
 import Sidebar from '@/components/layout/sidebar';
 import styles from './layout.module.css';
+import SearchBar from '../../components/layout/search-bar';
+import ProtectedRoute from '@/components/layout/protected-route';
 
 export default function DashboardLayout({
   children,
@@ -8,8 +10,9 @@ export default function DashboardLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className={styles.dashboardContainer}>
-      <Sidebar />
+    <ProtectedRoute>
+      <div className={styles.dashboardContainer}>
+        <Sidebar />
       
       <main className={styles.mainContent}>
         <header className={styles.topHeader}>
@@ -17,10 +20,7 @@ export default function DashboardLayout({
              <h3>Workspace</h3>
            </div>
            
-           <div className={styles.searchBar}>
-             <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#adb5bd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-             <input type="text" placeholder="Search projects..." />
-           </div>
+           <SearchBar />
 
            <div className={styles.profileActions}>
               <button className={styles.iconButton}>
@@ -37,5 +37,6 @@ export default function DashboardLayout({
         </div>
       </main>
     </div>
+    </ProtectedRoute>
   );
 }

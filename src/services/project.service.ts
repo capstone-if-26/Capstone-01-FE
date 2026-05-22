@@ -22,10 +22,15 @@ export interface Project {
   school_level?: string;
   offered_degrees?: string;
   logo_url?: string;  
-  env_url?: string;   
+  env_url?: string;
+  videos?: any[];
+  business_briefs?: any[];
+  storyboard?: any;
 }
 
 export const initializeProject = async (data: {
+  project_id?: string;
+  project_name?: string;
   institution_name: string;
   institution_history?: string;
   school_level?: string;
@@ -63,4 +68,14 @@ export const getProjectById = async (id: string) => {
     console.log(res.data);
   return res.data;
 
+};
+
+export const renameProject = async (id: string, newName: string) => {
+  const res = await api.put(`/api/projects/${id}`, { name: newName });
+  return res.data;
+};
+
+export const deleteProject = async (id: string) => {
+  const res = await api.delete(`/api/projects/${id}`);
+  return res.data;
 };
