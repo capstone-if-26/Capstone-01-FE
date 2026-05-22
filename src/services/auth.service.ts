@@ -51,3 +51,9 @@ export const getAllUsers = async () => {
   const response = await api.get("/api/admin/users");
   return response.data;
 };
+export const logout = () => {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('userProfile');
+  window.location.href = '/login';
+};

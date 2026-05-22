@@ -2,10 +2,9 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { getAllUsers } from "@/services/auth.service";
+import { getAllUsers, getMe } from "@/services/auth.service";
 import { addCredits } from "@/services/credit.service";
 import styles from "./page.module.css";
-import { useAuth } from "@/contexts/AuthContext";
 
 interface User {
   id: string;
@@ -17,7 +16,6 @@ interface User {
 }
 
 export default function AdminPage() {
-  const { user } = useAuth();
   const router = useRouter();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -25,16 +23,26 @@ export default function AdminPage() {
   const [processing, setProcessing] = useState<{ [key: string]: boolean }>({});
 
   useEffect(() => {
-    // Basic redirect if not admin (though backend also protects)
-    if (user && user.role !== "admin") {
-      router.push("/dashboard");
-      return;
-    }
+    const initAdmin = async () => {
+      try {
+        const res = await getMe();
+        if (res.success && res.data) {
+          if (res.data.role !== "admin") {
+            router.push("/dashboard");
+            return;
+          }
+          // If admin, load users
+          loadUsers();
+        } else {
+          router.push("/dashboard");
+        }
+      } catch (err) {
+        router.push("/dashboard");
+      }
+    };
 
-    if (user) {
-      loadUsers();
-    }
-  }, [user, router]);
+    initAdmin();
+  }, [router]);
 
   const loadUsers = async () => {
     try {

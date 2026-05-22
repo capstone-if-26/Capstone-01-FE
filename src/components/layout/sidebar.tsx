@@ -4,7 +4,7 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import styles from './sidebar.module.css';
-import { getMe } from '@/services/auth.service';
+import { getMe, logout } from '@/services/auth.service';
 
 export default function Sidebar() {
   const pathname = usePathname();
@@ -132,15 +132,22 @@ export default function Sidebar() {
       </nav>
 
       {/* User profile — hidden on mobile */}
-      <Link href="/profile" style={{ textDecoration: 'none' }}>
-        <div className={styles.userProfile}>
+      <div className={styles.userProfile}>
+        <Link href="/profile" className={styles.profileLink} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
           <div className={styles.avatar}>{userInitial}</div>
           <div className={styles.userInfo}>
             <p className={styles.userName}>{userName}</p>
             <p className={styles.userPlan}>{userRole === 'admin' ? 'Admin' : 'Member'}</p>
           </div>
-        </div>
-      </Link>
+        </Link>
+        <button onClick={logout} className={styles.logoutBtn} title="Logout">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+      </div>
     </aside>
   );
 }
