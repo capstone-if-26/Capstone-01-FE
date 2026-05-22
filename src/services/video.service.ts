@@ -39,6 +39,14 @@ export interface SceneStatus {
   updated_at: string;
 }
 
+export interface PreviewResponse {
+  preview_url: string;
+}
+
+export interface DownloadResponse {
+  download_url: string;
+}
+
 export interface ApiResponse<T> {
   success: boolean;
   message: string;
@@ -46,10 +54,6 @@ export interface ApiResponse<T> {
 }
 
 export const videoService = {
-  /**
-   * Generate video variants from storyboard
-   * POST /api/videos/generate
-   */
   async generateVideo(
     payload: GenerateVideoPayload
   ): Promise<ApiResponse<VideoGenerationJob>> {
@@ -57,10 +61,6 @@ export const videoService = {
     return response.data;
   },
 
-  /**
-   * Get video variant details + scene statuses
-   * GET /api/videos/:id
-   */
   async getVideoStatus(
     variantId: string
   ): Promise<ApiResponse<VideoVariantStatus>> {
@@ -68,24 +68,36 @@ export const videoService = {
     return response.data;
   },
 
-  /**
-   * Get latest video variant for a storyboard by polling the generation job
-   * Returns the first variant's id to poll status
-   */
   async getStoryboardVariants(
     storyboardId: string
   ): Promise<ApiResponse<VideoVariantStatus[]>> {
     const response = await api.get(
       `/api/videos/storyboard/${storyboardId}`
     );
+
     return response.data;
   },
 
-  /**
-   * Poll video status until completed or failed.
-   * Calls onProgress with each status update.
-   * Returns the final VideoVariantStatus.
-   */
+  async getVideoDownloadUrl(
+    variantId: string
+  ): Promise<ApiResponse<DownloadResponse>> {
+    const response = await api.get(
+      `/api/videos/download/${variantId}`
+    );
+
+    return response.data;
+  },
+
+  async getVideoPreviewUrl(
+    variantId: string
+  ): Promise<ApiResponse<PreviewResponse>> {
+    const response = await api.get(
+      `/api/videos/preview/${variantId}`
+    );
+
+    return response.data;
+  },
+
   async pollUntilComplete(
     variantId: string,
     onProgress: (status: VideoVariantStatus) => void,
@@ -95,7 +107,9 @@ export const videoService = {
     for (let i = 0; i < maxAttempts; i++) {
       try {
         const res = await this.getVideoStatus(variantId);
+
         const data = res.data;
+
         onProgress(data);
 
         if (

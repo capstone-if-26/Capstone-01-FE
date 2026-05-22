@@ -57,6 +57,8 @@ function StoryboardContent() {
   const [renderProgress, setRenderProgress] = useState(0);
   const [renderStatus, setRenderStatus] = useState("");
   const [videoURL, setVideoURL] = useState<string | null>(null);
+  const [previewURL, setPreviewURL] = useState<string | null>(null);
+  const [downloadURL, setDownloadURL] = useState<string | null>(null);
   const [variantId, setVariantId] = useState<string | null>(null);
   const [renderError, setRenderError] = useState<string | null>(null);
 
@@ -161,6 +163,23 @@ function StoryboardContent() {
           setRenderProgress(100);
           setRenderStatus("Video siap diunduh!");
           setVideoURL(data.video_url || null);
+
+          // Fetch preview and download URLs
+          try {
+            const previewRes = await videoService.getVideoPreviewUrl(vid);
+            setPreviewURL(previewRes.data.preview_url);
+          } catch (err) {
+            console.warn("[Poll] Preview URL fetch failed:", err);
+            setPreviewURL(data.video_url || null);
+          }
+
+          try {
+            const downloadRes = await videoService.getVideoDownloadUrl(vid);
+            setDownloadURL(downloadRes.data.download_url);
+          } catch (err) {
+            console.warn("[Poll] Download URL fetch failed:", err);
+            setDownloadURL(data.video_url || null);
+          }
         } else if (data.status === "failed") {
           clearInterval(pollRef.current!);
           setIsRendering(false);
@@ -186,6 +205,8 @@ function StoryboardContent() {
     setRenderProgress(5);
     setRenderStatus("Mengirim ke backend…");
     setVideoURL(null);
+    setPreviewURL(null);
+    setDownloadURL(null);
     setRenderError(null);
     setVariantId(null);
 
@@ -435,7 +456,7 @@ function StoryboardContent() {
                     maxHeight: "480px",
                     background: "#000",
                   }}
-                  src={videoURL}
+                  src={previewURL ?? videoURL ?? undefined}
                 >
                   Browser Anda tidak mendukung tag video.
                 </video>
@@ -449,7 +470,7 @@ function StoryboardContent() {
                   Edit Storyboard
                 </button>
                 <a
-                  href={videoURL}
+                  href={downloadURL || videoURL}
                   download="generated-video.mp4"
                   className={styles.btnPrimary}
                   style={{ textDecoration: "none" }}
