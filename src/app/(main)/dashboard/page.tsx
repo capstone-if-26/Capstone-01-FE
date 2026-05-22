@@ -1,14 +1,40 @@
+"use client";
+
+import React, { useState, useEffect } from 'react';
 import styles from './page.module.css';
 import Link from 'next/link';
 
-const recentContents = [
-  { id: 1, title: 'Exploring Mars: AI...', status: 'Published', time: '2 hours ago', duration: '0:45' },
-  { id: 2, title: 'Tech Trends 2024...', status: 'Processing', time: 'Just now', duration: '-' },
-  { id: 3, title: 'Product Showcase...', status: 'Published', time: 'Yesterday', duration: '1:20' },
-  { id: 4, title: 'Nature B-Roll Pack 04', status: 'Published', time: '3 days ago', duration: '0:15' },
-];
+// IMPORT service yang baru kita buat
+import { getProjects, Project } from '@/services/project.service';
 
 export default function DashboardPage() {
+  const [recentContents, setRecentContents] = useState<Project[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // MENGAMBIL DATA MENGGUNAKAN SERVICE
+  useEffect(() => {
+    const fetchProjects = async () => {
+      try {
+        const result = await getProjects();
+        // Jika sukses, masukkan data project (termasuk ID-nya) ke dalam state
+        if (result.success && result.data) {
+          setRecentContents(result.data);
+        }
+      } catch (error) {
+        console.error("Gagal mengambil data project:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProjects();
+  }, []);
+
+  const formatDate = (dateString: string) => {
+    const options: Intl.DateTimeFormatOptions = { day: 'numeric', month: 'short', year: 'numeric' };
+    return new Date(dateString).toLocaleDateString('id-ID', options);
+  };
+
   return (
     <div className={styles.pageContainer}>
       {/* Hero Section */}
@@ -31,7 +57,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <p className={styles.statLabel}>TOTAL VIDEO</p>
-            <h2 className={styles.statValue}>124</h2>
+            <h2 className={styles.statValue}>{isLoading ? '...' : recentContents.length}</h2>
           </div>
         </div>
         
@@ -50,40 +76,49 @@ export default function DashboardPage() {
       <section className={styles.recentSection}>
         <div className={styles.sectionHeader}>
           <h3>Recent Content</h3>
-          <a href="/projects" className={styles.viewAll}>View All</a>
+          <Link href="/library" className={styles.viewAll}>View All</Link>
         </div>
         
         <div className={styles.gridContainer}>
-          {recentContents.map((item) => (
-            <div key={item.id} className={styles.contentCard}>
-              <div className={styles.thumbnailPlaceholder}>
-                <span className={styles.duration}>{item.duration}</span>
-              </div>
-              <h4>{item.title}</h4>
-              <div className={styles.cardFooter}>
-                <span className={item.status === 'Published' ? styles.badgeGreen : styles.badgeYellow}>
-                  <span className={styles.dot}></span> {item.status}
-                </span>
-                <span className={styles.time}>{item.time}</span>
-              </div>
-            </div>
-          ))}
+          {isLoading ? (
+            <p style={{ color: '#6c757d', padding: '2rem 0', gridColumn: 'span 4' }}>Memuat daftar project...</p>
+          ) : recentContents.length === 0 ? (
+            <p style={{ color: '#6c757d', padding: '2rem 0', gridColumn: 'span 4' }}>Anda belum memiliki project. Buat video baru sekarang!</p>
+          ) : (
+            recentContents.slice(0, 4).map((item) => (
+              // BUNGKUS DENGAN LINK AGAR KESELURUHAN KOTAK BISA DIKLIK
+              // Perhatikan URL href-nya akan melempar ID ke halaman projects
+              <Link 
+                href={`/projects?projectId=${item.id}`} 
+                key={item.id} 
+                style={{ textDecoration: 'none', color: 'inherit' }}
+              >
+                <div className={styles.contentCard}>
+                  <div className={styles.thumbnailPlaceholder}>
+                    <span className={styles.duration}>0:45</span>
+                  </div>
+                  <h4>{item.name}</h4>
+                  <div className={styles.cardFooter}>
+                    <span className={item.status.toLowerCase() === 'published' || item.status.toLowerCase() === 'ready' ? styles.badgeGreen : styles.badgeYellow}>
+                      <span className={styles.dot}></span> {item.status.charAt(0).toUpperCase() + item.status.slice(1)}
+                    </span>
+                    <span className={styles.time}>{formatDate(item.created_at)}</span>
+                  </div>
+                </div>
+              </Link>
+            ))
+          )}
         </div>
       </section>
 
       {/* Bottom Widgets */}
       <section className={styles.bottomWidgets}>
-        {/* Widget Tips */}
         <div className={styles.tipsCard}>
-          <h3>Tips Hari Ini 💡</h3>
-          <p>
-            Gunakan prompt yang spesifik untuk mendapatkan detail video yang lebih tajam. 
-            Coba tambahkan kata kunci seperti &apos;cinematic lighting&apos; atau &apos;4k resolution&apos;.
-          </p>
+          <h3 style={{ color: 'white' }}>Tips Hari Ini 💡</h3>
+          <p>Gunakan prompt yang spesifik untuk mendapatkan detail video yang lebih tajam. Coba tambahkan kata kunci seperti 'cinematic lighting' atau '4k resolution'.</p>
           <button className={styles.outlineButton}>Lihat Panduan Prompt</button>
         </div>
 
-        {/* Widget Templates */}
         <div className={styles.templateWidget}>
           <h3>Template Terpopuler</h3>
           <div className={styles.templateGrid}>
