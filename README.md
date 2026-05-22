@@ -1,100 +1,48 @@
-# Capstone-01-FE
-CAPSTONE 01 - AI Content Generator Platform
+# Sevima AI Video Gen - Frontend
 
-Ini adalah frontend untuk project Capstone, menggunakan **Next.js 14** dan **TypeScript**.  
-Backend masih dalam tahap mock API, jadi semua request API masih menggunakan mock service.
+Aplikasi frontend untuk platform pembuatan video pembelajaran otomatis berbasis AI. Proyek ini dibangun menggunakan **Next.js 14** dan **TypeScript**. Saat ini backend telah terintegrasi penuh (sudah tidak menggunakan mock API lagi).
 
 ---
 
-## 🛠️ Prasyarat
+## 🚀 Prasyarat
 
 Pastikan sudah terinstall:
-
-- Node.js ≥ 22
-- npm ≥ 10
+- Node.js >= 18 (direkomendasikan v20+)
+- npm >= 9
 - Git
 
 ---
 
-## ⚡ Instalasi dan Menjalankan Project
+## 📦 Instalasi dan Menjalankan Project
 
 1. **Clone repository:**
+   ```bash
+   git clone <URL_REPO_FE>
+   cd Capstone-01-FE
+   ```
 
-```bash
-git clone <URL_REPO_KAMU>
-cd <FOLDER_PROJECT>
-```
+2. **Install dependencies:**
+   ```bash
+   npm install
+   ```
 
-2. **Clone dependencies:**
+3. **Konfigurasi Environment:**
+   Salin file `.env.example` menjadi `.env.local` (atau sesuaikan dengan file .env yang ada)
+   ```bash
+   NEXT_PUBLIC_API_URL=http://localhost:5000
+   ```
 
-```bash
-npm install
-```
-
-3. **Jalankan development server**
-
-```bash
-npm run dev
-```
-
-4. **Buka di browser**
-
-```
-http://localhost:3000
-```
+4. **Jalankan Development Server:**
+   ```bash
+   npm run dev
+   ```
 
 ---
 
-## 🧩 Struktur Folder
+## 🏗️ Struktur Proyek & Fitur Terkini
 
-```
-src
- ├── app                     # Halaman Next.js
- │   ├── login               # Page login
- │   │   └── page.tsx
- │   ├── register            # Page register
- │   │   └── page.tsx
- │   ├── globals.css         # Global CSS, import design-system.css
- │   ├── layout.tsx          # Layout utama
- │   └── page.tsx            # Home page
- │
- ├── components              # UI Components
- │   ├── forms               # Form login & register
- │   │   ├── login-form.tsx
- │   │   ├── login-form.module.css
- │   │   ├── register-form.tsx
- │   │   └── register-form.module.css
- │   ├── layout              # Components layout reusable
- │   └── ui                  # UI kecil seperti button, card, dll
- │
- ├── hooks                   # Custom hooks
- │   ├── use-login.ts
- │   └── use-register.ts
- │
- ├── lib                     # Library/helper
- │   └── axios.ts             # Instance axios untuk API
- │
- ├── services                # Service untuk API
- │   └── auth.service.ts
- │
- ├── store                   # State management (redux/zustand)
- │
- ├── styles                  # CSS global / design-system
- │   └── design-system.css
- │
- ├── types                   # TypeScript type
- │   └── auth.ts
- ├── .next                    # Build cache Next.js (tidak di git)
- ├── node_modules             # Dependencies (tidak di git)
- ├── package-lock.json
- ├── package.json
- └── tsconfig.json
-```
-
----
-## ⚙️ Mock API
-Saat ini API masih mock:
-- ```hooks/use-register.ts``` → menggunakan fungsi mock ```registerUser```.
-- ```services/auth.service.ts``` → menyediakan interface API (mock).
-
----
+- **Autentikasi**: Terintegrasi penuh dengan backend PostgreSQL. Token tersimpan via interceptor Axios.
+- **Admin Panel**: Akses khusus role admin untuk melihat daftar user dan menambahkan kredit AI (`/admin`).
+- **Dashboard & Library**: Manajemen proyek dan storyboard.
+- **Top Actions**: Fitur polling notifikasi otomatis (mengecek status video background worker) dan modal bantuan modern.
+- **Styling**: Menggunakan sistem desain CSS Modules (`design-system.css`) tanpa framework eksternal untuk kontrol performa yang maksimal.
