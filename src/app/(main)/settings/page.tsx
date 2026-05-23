@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from './settings.module.css';
-import { getMe, deleteAccount } from '@/services/auth.service';
+import { getMe, deleteAccount, updatePreferences } from '@/services/auth.service';
 import { getMyCredits } from '@/services/credit.service';
 import { useRouter } from 'next/navigation';
 
@@ -27,6 +27,12 @@ export default function SettingsPage() {
         ]);
         if (meRes.success && meRes.data) {
           setUserInfo(meRes.data);
+          setSettings({
+            emailAlerts: meRes.data.email_alerts ?? true,
+            newsletter: meRes.data.newsletter ?? false,
+            publicProfile: meRes.data.public_profile ?? false,
+            dataTraining: meRes.data.data_training ?? true,
+          });
         }
         if (creditRes?.data) {
           setCredits(creditRes.data.credits);
@@ -38,8 +44,27 @@ export default function SettingsPage() {
     fetchData();
   }, []);
 
-  const handleToggle = (key: keyof typeof settings) => {
-    setSettings(prev => ({ ...prev, [key]: !prev[key] }));
+  const handleToggle = async (key: keyof typeof settings) => {
+    const newValue = !settings[key];
+    setSettings(prev => ({ ...prev, [key]: newValue }));
+    
+    // Map to API keys
+    const apiKeys: Record<string, string> = {
+      emailAlerts: 'email_alerts',
+      newsletter: 'newsletter',
+      publicProfile: 'public_profile',
+      dataTraining: 'data_training'
+    };
+
+    try {
+      await updatePreferences({
+        [apiKeys[key]]: newValue
+      });
+    } catch (error) {
+      console.error("Failed to save preference", error);
+      // Revert if failed
+      setSettings(prev => ({ ...prev, [key]: !newValue }));
+    }
   };
 
   const handleDeleteAccount = async () => {

@@ -24,6 +24,16 @@ export const getMe = async () => {
   return response.data;
 };
 
+export const updatePreferences = async (data: {
+  email_alerts?: boolean;
+  newsletter?: boolean;
+  public_profile?: boolean;
+  data_training?: boolean;
+}) => {
+  const response = await api.put("/api/auth/preferences", data);
+  return response.data;
+};
+
 export const refreshToken = async (refresh_token: string) => {
   const response = await api.post("/api/auth/refresh", {
     refresh_token,
