@@ -22,6 +22,9 @@ export default function AdminPage() {
   const [addAmounts, setAddAmounts] = useState<{ [key: string]: number }>({});
   const [processing, setProcessing] = useState<{ [key: string]: boolean }>({});
 
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
   useEffect(() => {
     const initAdmin = async () => {
       try {
@@ -115,7 +118,7 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {users.map((u) => (
+              {users.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((u) => (
                 <tr key={u.id}>
                   <td>{u.name}</td>
                   <td>{u.email}</td>
@@ -167,6 +170,51 @@ export default function AdminPage() {
             </tbody>
           </table>
         </div>
+        
+        {Math.ceil(users.length / ITEMS_PER_PAGE) > 1 && (
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderTop: '1px solid #dee2e6' }}>
+            <span style={{ fontSize: '0.9rem', color: '#6c757d' }}>
+              Halaman {currentPage} dari {Math.ceil(users.length / ITEMS_PER_PAGE)}
+            </span>
+            <div style={{ display: 'flex', gap: '0.5rem' }}>
+              <button 
+                className={styles.btn} 
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                style={{ padding: '0.4rem 0.8rem', opacity: currentPage === 1 ? 0.5 : 1 }}
+              >
+                Previous
+              </button>
+              
+              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                {Array.from({ length: Math.ceil(users.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+                  <button 
+                    key={page} 
+                    className={styles.btn}
+                    onClick={() => setCurrentPage(page)}
+                    style={{ 
+                      padding: '0.4rem 0.8rem', 
+                      backgroundColor: currentPage === page ? '#0d6efd' : 'transparent',
+                      color: currentPage === page ? 'white' : '#212529',
+                      border: currentPage === page ? 'none' : '1px solid #dee2e6'
+                    }}
+                  >
+                    {page}
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                className={styles.btn} 
+                disabled={currentPage === Math.ceil(users.length / ITEMS_PER_PAGE)}
+                onClick={() => setCurrentPage(p => Math.min(Math.ceil(users.length / ITEMS_PER_PAGE), p + 1))}
+                style={{ padding: '0.4rem 0.8rem', opacity: currentPage === Math.ceil(users.length / ITEMS_PER_PAGE) ? 0.5 : 1 }}
+              >
+                Next
+              </button>
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

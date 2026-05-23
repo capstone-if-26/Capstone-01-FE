@@ -12,7 +12,8 @@ export default function LibraryPage() {
   const [projects, setProjects] = useState<Project[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [visibleCount, setVisibleCount] = useState(20);
+  const [currentPage, setCurrentPage] = useState(1);
+  const ITEMS_PER_PAGE = 7; // 7 projects + 1 "Create New" card fits nicely in an 8-grid layout
   const [searchQuery, setSearchQuery] = useState(searchParams.get('search') || '');
   
   const [renameModal, setRenameModal] = useState<{isOpen: boolean, id: string, name: string}>({isOpen: false, id: '', name: ''});
@@ -101,6 +102,11 @@ export default function LibraryPage() {
 
     fetchProjects();
   }, []);
+
+  // Reset page when filters change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, statusFilter, sortFilter]);
 
   const handleNewProject = () => {
     router.push('/projects');
@@ -220,7 +226,7 @@ export default function LibraryPage() {
         ) : filteredProjects.length === 0 ? (
           <div style={{ gridColumn: '1 / -1', padding: '2rem 0', color: '#6c757d' }}>Belum ada project yang dibuat.</div>
         ) : (
-          filteredProjects.slice(0, visibleCount).map((project) => {
+          filteredProjects.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((project) => {
             const isGenerated = project.status?.toLowerCase() === 'published' || project.status?.toLowerCase() === 'ready';
             const videoUrl = project.videos && project.videos.length > 0 ? project.videos[0].video_url : null;
             const targetUrl = videoUrl ? `/preview/${project.id}` : `/projects?projectId=${project.id}`;
@@ -317,21 +323,45 @@ export default function LibraryPage() {
         </div>
       </div>
 
-      {/* Pagination (Load More) */}
-      <div className={styles.paginationArea}>
-        <span className={styles.pageInfo}>Menampilkan {Math.min(visibleCount, filteredProjects.length)} dari {filteredProjects.length} project</span>
-        <div className={styles.pageControls}>
-          {visibleCount < filteredProjects.length && (
+      {/* Pagination (Discrete) */}
+      {Math.ceil(filteredProjects.length / ITEMS_PER_PAGE) > 1 && (
+        <div className={styles.paginationArea}>
+          <span className={styles.pageInfo}>
+            Halaman {currentPage} dari {Math.ceil(filteredProjects.length / ITEMS_PER_PAGE)}
+          </span>
+          <div className={styles.pageControls} style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
             <button 
-              className={styles.btnPrimary} 
-              onClick={() => setVisibleCount(prev => prev + 20)}
-              style={{ fontSize: '0.9rem', padding: '0.5rem 1rem' }}
+              className={styles.btnSecondary} 
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              style={{ fontSize: '0.9rem', padding: '0.4rem 0.8rem', opacity: currentPage === 1 ? 0.5 : 1 }}
             >
-              Load More
+              Previous
             </button>
-          )}
+            
+            <div style={{ display: 'flex', gap: '0.25rem' }}>
+              {Array.from({ length: Math.ceil(filteredProjects.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
+                <button 
+                  key={page} 
+                  className={currentPage === page ? styles.pageBtnActive : styles.pageBtn}
+                  onClick={() => setCurrentPage(page)}
+                >
+                  {page}
+                </button>
+              ))}
+            </div>
+
+            <button 
+              className={styles.btnSecondary} 
+              disabled={currentPage === Math.ceil(filteredProjects.length / ITEMS_PER_PAGE)}
+              onClick={() => setCurrentPage(p => Math.min(Math.ceil(filteredProjects.length / ITEMS_PER_PAGE), p + 1))}
+              style={{ fontSize: '0.9rem', padding: '0.4rem 0.8rem', opacity: currentPage === Math.ceil(filteredProjects.length / ITEMS_PER_PAGE) ? 0.5 : 1 }}
+            >
+              Next
+            </button>
+          </div>
         </div>
-      </div>
+      )}
       
       {renameModal.isOpen && (
         <div className={styles.modalOverlay}>
