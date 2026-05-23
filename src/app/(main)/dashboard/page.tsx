@@ -189,7 +189,7 @@ export default function DashboardPage() {
           ) : recentContents.filter(p => p.videos && p.videos.length > 0 && p.videos[0].video_url).length === 0 ? (
             <p style={{ color: '#6c757d', padding: '2rem 0', gridColumn: 'span 4' }}>Belum ada video yang selesai dibuat.</p>
           ) : (
-            recentContents.filter(p => p.videos && p.videos.length > 0 && p.videos[0].video_url).slice(0, 20).map((item) => {
+            recentContents.filter(p => p.videos && p.videos.length > 0 && p.videos[0].video_url).slice(0, 8).map((item) => {
               const video = item.videos![0];
               const isProcessing = ['pending', 'queued', 'generating_assets', 'processing', 'stitching_video'].includes(video.status);
               const videoUrl = video.video_url;

@@ -21,6 +21,7 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(true);
   const [addAmounts, setAddAmounts] = useState<{ [key: string]: number }>({});
   const [processing, setProcessing] = useState<{ [key: string]: boolean }>({});
+  const [searchQuery, setSearchQuery] = useState("");
 
   const ITEMS_PER_PAGE = 10;
   const [currentPage, setCurrentPage] = useState(1);
@@ -106,6 +107,19 @@ export default function AdminPage() {
       </div>
 
       <div className={styles.card}>
+        <div style={{ padding: '1rem', borderBottom: '1px solid #dee2e6' }}>
+          <input
+            type="text"
+            placeholder="Cari user berdasarkan email..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1); // Reset to page 1 on search
+            }}
+            className={styles.input}
+            style={{ width: '100%', maxWidth: '400px' }}
+          />
+        </div>
         <div className={styles.tableContainer}>
           <table className={styles.table}>
             <thead>
@@ -118,9 +132,13 @@ export default function AdminPage() {
               </tr>
             </thead>
             <tbody>
-              {users.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((u) => (
-                <tr key={u.id}>
-                  <td>{u.name}</td>
+              {(() => {
+                const filteredUsers = users.filter(u => u.email.toLowerCase().includes(searchQuery.toLowerCase()));
+                return (
+                  <>
+                    {filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((u) => (
+                      <tr key={u.id}>
+                        <td>{u.name}</td>
                   <td>{u.email}</td>
                   <td>
                     <span
@@ -160,10 +178,10 @@ export default function AdminPage() {
                   </td>
                 </tr>
               ))}
-              {users.length === 0 && (
+              {filteredUsers.length === 0 && (
                 <tr>
-                  <td colSpan={5} style={{ textAlign: "center" }}>
-                    No users found.
+                  <td colSpan={5} style={{ textAlign: "center", padding: "2rem" }}>
+                    No users found matching "{searchQuery}"
                   </td>
                 </tr>
               )}
@@ -171,50 +189,56 @@ export default function AdminPage() {
           </table>
         </div>
         
-        {Math.ceil(users.length / ITEMS_PER_PAGE) > 1 && (
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderTop: '1px solid #dee2e6' }}>
-            <span style={{ fontSize: '0.9rem', color: '#6c757d' }}>
-              Halaman {currentPage} dari {Math.ceil(users.length / ITEMS_PER_PAGE)}
-            </span>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button 
-                className={styles.btn} 
-                disabled={currentPage === 1}
-                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
-                style={{ padding: '0.4rem 0.8rem', opacity: currentPage === 1 ? 0.5 : 1 }}
-              >
-                Previous
-              </button>
-              
-              <div style={{ display: 'flex', gap: '0.25rem' }}>
-                {Array.from({ length: Math.ceil(users.length / ITEMS_PER_PAGE) }, (_, i) => i + 1).map(page => (
-                  <button 
-                    key={page} 
-                    className={styles.btn}
-                    onClick={() => setCurrentPage(page)}
-                    style={{ 
-                      padding: '0.4rem 0.8rem', 
-                      backgroundColor: currentPage === page ? '#0d6efd' : 'transparent',
-                      color: currentPage === page ? 'white' : '#212529',
-                      border: currentPage === page ? 'none' : '1px solid #dee2e6'
-                    }}
-                  >
-                    {page}
-                  </button>
-                ))}
-              </div>
+        {(() => {
+          const filteredUsers = users.filter(u => u.email.toLowerCase().includes(searchQuery.toLowerCase()));
+          const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+          if (totalPages <= 1) return null;
+          
+          return (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderTop: '1px solid #dee2e6' }}>
+              <span style={{ fontSize: '0.9rem', color: '#6c757d' }}>
+                Halaman {currentPage} dari {totalPages}
+              </span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button 
+                  className={styles.btn} 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  style={{ padding: '0.4rem 0.8rem', opacity: currentPage === 1 ? 0.5 : 1 }}
+                >
+                  Previous
+                </button>
+                
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button 
+                      key={page} 
+                      className={styles.btn}
+                      onClick={() => setCurrentPage(page)}
+                      style={{ 
+                        padding: '0.4rem 0.8rem', 
+                        backgroundColor: currentPage === page ? '#0d6efd' : 'transparent',
+                        color: currentPage === page ? 'white' : '#212529',
+                        border: currentPage === page ? 'none' : '1px solid #dee2e6'
+                      }}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
 
-              <button 
-                className={styles.btn} 
-                disabled={currentPage === Math.ceil(users.length / ITEMS_PER_PAGE)}
-                onClick={() => setCurrentPage(p => Math.min(Math.ceil(users.length / ITEMS_PER_PAGE), p + 1))}
-                style={{ padding: '0.4rem 0.8rem', opacity: currentPage === Math.ceil(users.length / ITEMS_PER_PAGE) ? 0.5 : 1 }}
-              >
-                Next
-              </button>
+                <button 
+                  className={styles.btn} 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  style={{ padding: '0.4rem 0.8rem', opacity: currentPage === totalPages ? 0.5 : 1 }}
+                >
+                  Next
+                </button>
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
