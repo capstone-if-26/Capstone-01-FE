@@ -17,6 +17,7 @@ interface Scene {
   visual: string;
   thumbnail: string | null;
   isEditing: boolean;
+  durationNum: number;
 }
 
 // ─── Status label mapping ─────────────────────────────────────────────────────
@@ -86,17 +87,32 @@ function StoryboardContent() {
         });
 
         const mappedScenes: Scene[] = storyboard.sections.map(
-          (section: any, index: number) => ({
-            id: String(index + 1).padStart(2, "0"),
-            time: `00:00:${String(index * section.duration).padStart(2, "0")}`,
-            title: section.section_type,
-            duration: `00:${String(section.duration).padStart(2, "0")}`,
-            status: "Ready",
-            narration: section.content,
-            visual: section.content,
-            thumbnail: null,
-            isEditing: false,
-          })
+          (section: any, index: number) => {
+            let narrationText = section.content;
+            let visualText = section.content;
+
+            try {
+              // Extract from JSON string if formatted that way
+              const parsed = JSON.parse(section.content);
+              if (parsed.narration) narrationText = parsed.narration;
+              if (parsed.visual) visualText = parsed.visual;
+            } catch (e) {
+              // Fallback to raw content if not JSON
+            }
+
+            return {
+              id: String(index + 1).padStart(2, "0"),
+              time: `00:00:${String(index * section.duration).padStart(2, "0")}`,
+              title: section.section_type,
+              duration: `00:${String(section.duration).padStart(2, "0")}`,
+              status: "Ready",
+              narration: narrationText,
+              visual: visualText,
+              thumbnail: null,
+              isEditing: false,
+              durationNum: section.duration,
+            };
+          }
         );
 
         setScenes(mappedScenes);
@@ -211,7 +227,19 @@ function StoryboardContent() {
     setVariantId(null);
 
     try {
+      // 0. Save current scenes back to storyboard before generating
+      setRenderStatus("Menyimpan teks storyboard...");
+      const updatedSections = scenes.map(s => ({
+        section_type: s.title,
+        content: JSON.stringify({ narration: s.narration, visual: s.visual }),
+        duration: s.durationNum
+      }));
+      await storyboardService.updateStoryboard(storyboardId, {
+        sections: updatedSections
+      });
+
       // 1. Trigger generation — backend creates GenerationJob + VideoVariant
+      setRenderStatus("Mengirim ke backend…");
       const res = await videoService.generateVideo({
         project_id: projectId,
         storyboard_id: storyboardId,
