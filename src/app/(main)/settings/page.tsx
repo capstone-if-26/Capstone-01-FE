@@ -129,26 +129,32 @@ export default function SettingsPage() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" strokeWidth="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
               Notifications
             </h3>
-            <div className={styles.settingItem}>
-              <div className={styles.settingText}>
-                <h4>Email Alerts</h4>
-                <p>Updates on project exports</p>
-              </div>
-              <label className={styles.switch}>
-                <input type="checkbox" checked={settings.emailAlerts} onChange={() => handleToggle('emailAlerts')} />
-                <span className={styles.slider}></span>
-              </label>
-            </div>
-            <div className={styles.settingItem}>
-              <div className={styles.settingText}>
-                <h4>Newsletter</h4>
-                <p>Weekly AI trends & tips</p>
-              </div>
-              <label className={styles.switch}>
-                <input type="checkbox" checked={settings.newsletter} onChange={() => handleToggle('newsletter')} />
-                <span className={styles.slider}></span>
-              </label>
-            </div>
+            {userInfo ? (
+              <>
+                <div className={styles.settingItem}>
+                  <div className={styles.settingText}>
+                    <h4>Email Alerts</h4>
+                    <p>Updates on project exports</p>
+                  </div>
+                  <label className={styles.switch}>
+                    <input type="checkbox" checked={settings.emailAlerts} onChange={() => handleToggle('emailAlerts')} />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div>
+                <div className={styles.settingItem}>
+                  <div className={styles.settingText}>
+                    <h4>Newsletter</h4>
+                    <p>Weekly AI trends & tips</p>
+                  </div>
+                  <label className={styles.switch}>
+                    <input type="checkbox" checked={settings.newsletter} onChange={() => handleToggle('newsletter')} />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div>
+              </>
+            ) : (
+              <p style={{ color: '#6c757d', fontSize: '0.9rem' }}>Memuat preferensi...</p>
+            )}
           </div>
 
           {/* Card: Privacy */}
@@ -157,26 +163,32 @@ export default function SettingsPage() {
               <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" strokeWidth="2"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"></path></svg>
               Privacy
             </h3>
-            <div className={styles.settingItem}>
-              <div className={styles.settingText}>
-                <h4>Public Profile</h4>
-                <p>Allow others to see assets</p>
-              </div>
-              <label className={styles.switch}>
-                <input type="checkbox" checked={settings.publicProfile} onChange={() => handleToggle('publicProfile')} />
-                <span className={styles.slider}></span>
-              </label>
-            </div>
-            <div className={styles.settingItem}>
-              <div className={styles.settingText}>
-                <h4>Data Training</h4>
-                <p>Use my inputs to improve AI</p>
-              </div>
-              <label className={styles.switch}>
-                <input type="checkbox" checked={settings.dataTraining} onChange={() => handleToggle('dataTraining')} />
-                <span className={styles.slider}></span>
-              </label>
-            </div>
+            {userInfo ? (
+              <>
+                <div className={styles.settingItem}>
+                  <div className={styles.settingText}>
+                    <h4>Public Profile</h4>
+                    <p>Allow others to see assets</p>
+                  </div>
+                  <label className={styles.switch}>
+                    <input type="checkbox" checked={settings.publicProfile} onChange={() => handleToggle('publicProfile')} />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div>
+                <div className={styles.settingItem}>
+                  <div className={styles.settingText}>
+                    <h4>Data Training</h4>
+                    <p>Use my inputs to improve AI</p>
+                  </div>
+                  <label className={styles.switch}>
+                    <input type="checkbox" checked={settings.dataTraining} onChange={() => handleToggle('dataTraining')} />
+                    <span className={styles.slider}></span>
+                  </label>
+                </div>
+              </>
+            ) : (
+              <p style={{ color: '#6c757d', fontSize: '0.9rem' }}>Memuat preferensi...</p>
+            )}
           </div>
           
         </div>
