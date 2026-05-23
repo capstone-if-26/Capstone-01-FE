@@ -171,7 +171,14 @@ export default function PreviewPage() {
 
         <button 
           className={styles.backBtn} 
-          onClick={() => router.push(`/storyboard?projectId=${projectId}`)}
+          onClick={() => {
+            const sbId = project?.storyboard?.id;
+            if (sbId) {
+              router.push(`/storyboard?projectId=${projectId}&storyboardId=${sbId}`);
+            } else {
+              alert("Storyboard belum dibuat untuk project ini.");
+            }
+          }}
           style={{ 
             color: '#0d6efd', 
             backgroundColor: 'rgba(13, 110, 253, 0.1)', 
