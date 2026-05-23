@@ -138,8 +138,9 @@ export default function LibraryPage() {
   };
 
   const getThumbnail = (project: Project) => {
-    if (project.videos && project.videos.length > 0 && project.videos[0].thumbnail_url) {
-      return project.videos[0].thumbnail_url;
+    if (project.videos && project.videos.length > 0) {
+      const latestVideo = project.videos[project.videos.length - 1];
+      if (latestVideo.thumbnail_url) return latestVideo.thumbnail_url;
     }
     return '';
   };
@@ -147,8 +148,9 @@ export default function LibraryPage() {
   const filteredProjects = projects.filter(p => {
     if (searchQuery && !(p.name && p.name.toLowerCase().includes(searchQuery.toLowerCase()))) return false;
     
-    const isProcessing = p.videos && p.videos.length > 0 && ['pending', 'queued', 'generating_assets', 'processing', 'stitching_video'].includes(p.videos[0].status);
-    const videoUrl = p.videos && p.videos.length > 0 ? p.videos[0].video_url : null;
+    const latestVideo = p.videos && p.videos.length > 0 ? p.videos[p.videos.length - 1] : null;
+    const isProcessing = latestVideo && ['pending', 'queued', 'generating_assets', 'processing', 'stitching_video'].includes(latestVideo.status);
+    const videoUrl = latestVideo?.video_url;
     const isReady = !!videoUrl || (p.status && (p.status.toLowerCase() === 'published' || p.status.toLowerCase() === 'ready'));
     
     if (statusFilter === 'Ready' && !isReady) return false;
@@ -227,10 +229,10 @@ export default function LibraryPage() {
           <div style={{ gridColumn: '1 / -1', padding: '2rem 0', color: '#6c757d' }}>Belum ada project yang dibuat.</div>
         ) : (
           filteredProjects.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((project) => {
-            const isGenerated = project.status?.toLowerCase() === 'published' || project.status?.toLowerCase() === 'ready';
-            const videoUrl = project.videos && project.videos.length > 0 ? project.videos[0].video_url : null;
+            const video = project.videos && project.videos.length > 0 ? project.videos[project.videos.length - 1] : null;
+            const videoUrl = video?.video_url;
             const targetUrl = videoUrl ? `/preview/${project.id}` : `/projects?projectId=${project.id}`;
-            const isProcessing = project.videos && project.videos.length > 0 && ['pending', 'queued', 'generating_assets', 'processing', 'stitching_video'].includes(project.videos[0].status);
+            const isProcessing = video ? ['pending', 'queued', 'generating_assets', 'processing', 'stitching_video'].includes(video.status) : false;
 
             return (
             <div
@@ -257,9 +259,9 @@ export default function LibraryPage() {
                     </div>
                   )}
                   {videoUrl && (
-                    <span style={{ position: 'absolute', bottom: '8px', right: '8px', background: 'rgba(0,0,0,0.75)', color: 'white', padding: '2px 6px', borderRadius: '4px', fontSize: '0.72rem', fontWeight: 600 }}>
+                    <span className={styles.duration}>
                       {(() => {
-                        const dur = project.videos?.[0]?.duration || 0;
+                        const dur = video?.duration || 0;
                         if (dur > 0) { const m = Math.floor(dur / 60); const s = dur % 60; return `${m}:${s.toString().padStart(2, '0')}`; }
                         return '0:06';
                       })()}

@@ -123,8 +123,9 @@ export default function DashboardPage() {
   };
 
   const getThumbnail = (project: Project) => {
-    if (project.videos && project.videos.length > 0 && project.videos[0].thumbnail_url) {
-      return project.videos[0].thumbnail_url;
+    if (project.videos && project.videos.length > 0) {
+      const latestVideo = project.videos[project.videos.length - 1];
+      if (latestVideo.thumbnail_url) return latestVideo.thumbnail_url;
     }
     return '';
   };
@@ -151,7 +152,7 @@ export default function DashboardPage() {
           </div>
           <div>
             <p className={styles.statLabel}>TOTAL VIDEO</p>
-            <h2 className={styles.statValue}>{isLoading ? '...' : recentContents.filter(p => p.videos && p.videos.length > 0 && p.videos[0].video_url).length}</h2>
+            <h2 className={styles.statValue}>{isLoading ? '...' : recentContents.filter(p => p.videos && p.videos.length > 0 && p.videos[p.videos.length - 1].video_url).length}</h2>
           </div>
         </div>
 
@@ -186,11 +187,11 @@ export default function DashboardPage() {
         <div className={styles.gridContainer}>
           {isLoading ? (
             <p style={{ color: '#6c757d', padding: '2rem 0', gridColumn: 'span 4' }}>Memuat daftar project...</p>
-          ) : recentContents.filter(p => p.videos && p.videos.length > 0 && p.videos[0].video_url).length === 0 ? (
+          ) : recentContents.filter(p => p.videos && p.videos.length > 0 && p.videos[p.videos.length - 1].video_url).length === 0 ? (
             <p style={{ color: '#6c757d', padding: '2rem 0', gridColumn: 'span 4' }}>Belum ada video yang selesai dibuat.</p>
           ) : (
-            recentContents.filter(p => p.videos && p.videos.length > 0 && p.videos[0].video_url).slice(0, 8).map((item) => {
-              const video = item.videos![0];
+            recentContents.filter(p => p.videos && p.videos.length > 0 && p.videos[p.videos.length - 1].video_url).slice(0, 8).map((item) => {
+              const video = item.videos![item.videos!.length - 1];
               const isProcessing = ['pending', 'queued', 'generating_assets', 'processing', 'stitching_video'].includes(video.status);
               const videoUrl = video.video_url;
               const targetUrl = videoUrl ? `/preview/${item.id}` : `/projects?projectId=${item.id}`;
@@ -225,7 +226,7 @@ export default function DashboardPage() {
                     )}
                     <span className={styles.duration}>
                       {videoUrl ? (() => {
-                        const dur = item.videos?.[0]?.duration || 0;
+                        const dur = video.duration || 0;
                         if (dur > 0) {
                           const m = Math.floor(dur / 60);
                           const s = dur % 60;

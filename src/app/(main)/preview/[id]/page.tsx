@@ -150,15 +150,10 @@ export default function PreviewPage() {
     );
   }
 
-  const videoUrl = project.videos && project.videos.length > 0 ? project.videos[0].video_url : null;
-  const thumbnailUrl = project.videos && project.videos.length > 0 ? project.videos[0].thumbnail_url : null;
   const institutionName = getInstitutionName(project);
   const themeName = getTheme(project);
   const eventContent = getEventContent(project);
   const toneName = getTone(project);
-
-  const statusLabel = videoUrl ? 'Ready' : (project.status ? project.status.charAt(0).toUpperCase() + project.status.slice(1) : 'Draft');
-  const isReady = !!videoUrl || project.status?.toLowerCase() === 'published' || project.status?.toLowerCase() === 'ready';
 
   return (
     <div className={styles.container}>
@@ -185,49 +180,83 @@ export default function PreviewPage() {
         </button>
       </div>
 
-      {/* Main Content - Video First, Full Width */}
-      <div className={styles.videoWrapper}>
-        <div className={styles.videoSection}>
-          {videoUrl ? (
-            <video
-              className={styles.videoPlayer}
-              src={videoUrl}
-              controls
-              playsInline
-              poster={thumbnailUrl || undefined}
-            >
-              Maaf, browser Anda tidak mendukung tag video.
-            </video>
-          ) : (
-            <div className={styles.noVideo}>
-              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#6c757d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-              <p>Video sedang diproses atau belum tersedia.</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* Info Bar below Video */}
-      <div className={styles.infoBar}>
+      {/* Info Bar at Top */}
+      <div className={styles.infoBar} style={{ marginBottom: '2rem' }}>
         <div className={styles.infoLeft}>
           <h1 className={styles.videoTitle}>{project.name || institutionName}</h1>
           <div className={styles.metaRow}>
-            <span className={`${styles.statusBadge} ${isReady ? styles.statusReady : styles.statusDraft}`}>
-              <span className={styles.statusDot}></span>
-              {statusLabel}
-            </span>
-            <span className={styles.metaDivider}>•</span>
             <span className={styles.metaText}>{formatDate(project.created_at)}</span>
+            <span className={styles.metaDivider}>•</span>
+            <span className={styles.metaText}>{project.videos?.length || 0} Video Versions</span>
           </div>
         </div>
-        {videoUrl && (
-          <button
-            className={styles.downloadBtn}
-            onClick={() => handleDownload(videoUrl, `${institutionName.replace(/\s+/g, '_')}_Video.mp4`)}
-          >
-            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
-            Download MP4
-          </button>
+      </div>
+
+      {/* Main Content - Videos Loop */}
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '3rem' }}>
+        {project.videos && project.videos.length > 0 ? (
+          // Sort videos by created_at descending if possible, or assume backend already did it
+          [...project.videos].reverse().map((vid: any, idx: number) => {
+            const isProcessing = ['pending', 'queued', 'generating_assets', 'processing', 'stitching_video'].includes(vid.status);
+            const statusLabel = vid.video_url ? 'Ready' : (isProcessing ? 'Processing' : (vid.status ? vid.status.charAt(0).toUpperCase() + vid.status.slice(1) : 'Draft'));
+            const isReady = !!vid.video_url || vid.status?.toLowerCase() === 'published' || vid.status?.toLowerCase() === 'ready';
+            const versionNum = project.videos!.length - idx;
+
+            return (
+              <div key={vid.id || idx} style={{ backgroundColor: '#fff', borderRadius: '16px', overflow: 'hidden', border: '1px solid #e9ecef', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+                <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e9ecef', backgroundColor: '#f8f9fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#212529', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                    Video Hasil Generasi {project.videos!.length > 1 ? `#${versionNum}` : ''}
+                  </h3>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
+                    <span className={`${styles.statusBadge} ${isReady ? styles.statusReady : styles.statusDraft}`}>
+                      <span className={styles.statusDot}></span>
+                      {statusLabel}
+                    </span>
+                    {vid.video_url && (
+                      <button
+                        style={{ padding: '0.5rem 1.25rem', fontSize: '0.9rem', backgroundColor: '#0d6efd', color: 'white', border: 'none', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600 }}
+                        onClick={() => handleDownload(vid.video_url, `${institutionName.replace(/\s+/g, '_')}_Video_${versionNum}.mp4`)}
+                      >
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                        Download
+                      </button>
+                    )}
+                  </div>
+                </div>
+                
+                <div className={styles.videoSection} style={{ padding: 0, border: 'none', borderRadius: 0, height: 'auto', minHeight: '400px', backgroundColor: '#1a1a1a' }}>
+                  {vid.video_url ? (
+                    <video
+                      className={styles.videoPlayer}
+                      src={vid.video_url}
+                      controls
+                      playsInline
+                      poster={vid.thumbnail_url || undefined}
+                      style={{ maxHeight: '600px', width: '100%', objectFit: 'contain', backgroundColor: '#000', display: 'block' }}
+                    >
+                      Maaf, browser Anda tidak mendukung tag video.
+                    </video>
+                  ) : (
+                    <div className={styles.noVideo} style={{ minHeight: '400px', backgroundColor: '#f8f9fa' }}>
+                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#6c757d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                      <p>Video sedang diproses atau belum tersedia.</p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })
+        ) : (
+          <div className={styles.videoWrapper}>
+            <div className={styles.videoSection}>
+              <div className={styles.noVideo}>
+                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#6c757d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                <p>Belum ada video yang di-generate.</p>
+              </div>
+            </div>
+          </div>
         )}
       </div>
 
