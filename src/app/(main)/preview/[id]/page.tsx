@@ -13,6 +13,7 @@ export default function PreviewPage() {
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState('');
+  const [activeTab, setActiveTab] = useState<number>(0);
 
   useEffect(() => {
     if (!projectId) return;
@@ -22,6 +23,9 @@ export default function PreviewPage() {
         const result = await getProjectById(projectId);
         if (result.success && result.data) {
           setProject(result.data);
+          if (result.data.videos && result.data.videos.length > 0) {
+            setActiveTab(result.data.videos.length - 1);
+          }
         } else {
           setError(result.message || "Gagal memuat detail project.");
         }
@@ -192,22 +196,52 @@ export default function PreviewPage() {
         </div>
       </div>
 
-      {/* Main Content - Videos Loop */}
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem', marginBottom: '3rem' }}>
-        {project.videos && project.videos.length > 0 ? (
-          // Sort videos by created_at descending if possible, or assume backend already did it
-          [...project.videos].reverse().map((vid: any, idx: number) => {
+      {/* Main Content - Videos Tabs */}
+      {project.videos && project.videos.length > 0 ? (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', marginBottom: '3rem' }}>
+          
+          {/* Tabs Header */}
+          <div style={{ display: 'flex', gap: '0.75rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>
+            {project.videos.map((vid: any, idx: number) => {
+              const isActive = activeTab === idx;
+              return (
+                <button
+                  key={vid.id || idx}
+                  onClick={() => setActiveTab(idx)}
+                  style={{
+                    padding: '0.6rem 1.5rem',
+                    backgroundColor: isActive ? '#0d6efd' : '#f8f9fa',
+                    color: isActive ? 'white' : '#495057',
+                    border: isActive ? '1px solid #0d6efd' : '1px solid #dee2e6',
+                    borderRadius: '50px',
+                    fontWeight: isActive ? 600 : 500,
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    transition: 'all 0.2s ease-in-out',
+                    boxShadow: isActive ? '0 4px 10px rgba(13, 110, 253, 0.25)' : 'none'
+                  }}
+                >
+                  Versi {idx + 1} {idx === project.videos!.length - 1 && '(Terbaru)'}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* Tab Content */}
+          {(() => {
+            const vid = project.videos![activeTab];
+            if (!vid) return null;
+            
             const isProcessing = ['pending', 'queued', 'generating_assets', 'processing', 'stitching_video'].includes(vid.status);
             const statusLabel = vid.video_url ? 'Ready' : (isProcessing ? 'Processing' : (vid.status ? vid.status.charAt(0).toUpperCase() + vid.status.slice(1) : 'Draft'));
             const isReady = !!vid.video_url || vid.status?.toLowerCase() === 'published' || vid.status?.toLowerCase() === 'ready';
-            const versionNum = project.videos!.length - idx;
 
             return (
-              <div key={vid.id || idx} style={{ backgroundColor: '#fff', borderRadius: '16px', overflow: 'hidden', border: '1px solid #e9ecef', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
+              <div style={{ backgroundColor: '#fff', borderRadius: '16px', overflow: 'hidden', border: '1px solid #e9ecef', boxShadow: '0 4px 12px rgba(0,0,0,0.03)' }}>
                 <div style={{ padding: '1.25rem 1.5rem', borderBottom: '1px solid #e9ecef', backgroundColor: '#f8f9fa', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#212529', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                     <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-                    Video Hasil Generasi {project.videos!.length > 1 ? `#${versionNum}` : ''}
+                    Video Hasil Generasi #{activeTab + 1}
                   </h3>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '1rem' }}>
                     <span className={`${styles.statusBadge} ${isReady ? styles.statusReady : styles.statusDraft}`}>
@@ -217,7 +251,7 @@ export default function PreviewPage() {
                     {vid.video_url && (
                       <button
                         style={{ padding: '0.5rem 1.25rem', fontSize: '0.9rem', backgroundColor: '#0d6efd', color: 'white', border: 'none', borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontWeight: 600 }}
-                        onClick={() => handleDownload(vid.video_url, `${institutionName.replace(/\s+/g, '_')}_Video_${versionNum}.mp4`)}
+                        onClick={() => handleDownload(vid.video_url, `${institutionName.replace(/\s+/g, '_')}_Video_${activeTab + 1}.mp4`)}
                       >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
                         Download
@@ -230,6 +264,7 @@ export default function PreviewPage() {
                   <div className={styles.videoSection}>
                     {vid.video_url ? (
                       <video
+                        key={vid.video_url}
                         className={styles.videoPlayer}
                         src={vid.video_url}
                         controls
@@ -248,18 +283,18 @@ export default function PreviewPage() {
                 </div>
               </div>
             );
-          })
-        ) : (
-          <div className={styles.videoWrapper}>
-            <div className={styles.videoSection}>
-              <div className={styles.noVideo}>
-                <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#6c757d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-                <p>Belum ada video yang di-generate.</p>
-              </div>
+          })()}
+        </div>
+      ) : (
+        <div className={styles.videoWrapper} style={{ marginBottom: '3rem' }}>
+          <div className={styles.videoSection}>
+            <div className={styles.noVideo}>
+              <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#6c757d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+              <p>Belum ada video yang di-generate.</p>
             </div>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Details Grid */}
       <div className={styles.detailsGrid}>
