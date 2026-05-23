@@ -50,6 +50,7 @@ interface Scene {
   id: string; time: string; title: string; duration: string; status: string;
   narration: string; visual: string;
   isEditing: boolean;
+  durationNum: number;
 }
 
 // ================= KOMPONEN UTAMA (KONTEN) =================
@@ -157,7 +158,8 @@ function NewProjectContent() {
                     status: 'Ready',
                     narration: parsedNarration,
                     visual: parsedVisual,
-                    isEditing: false
+                    isEditing: false,
+                    durationNum: sec.duration
                   };
                 }));
               }
@@ -378,19 +380,22 @@ function NewProjectContent() {
           id: '01', time: '00:00:00', title: '1. Intro & Hook', duration: '00:15', status: 'Ready',
           narration: `"Halo generasi masa depan! Tahukah kamu bahwa ${selectedKeyMessage?.toLowerCase() || 'pendidikan itu penting'}"`,
           visual: `Visual bergaya ${toneOfVoice}. Menampilkan gerbang utama ${institutionName || 'kampus'}. Sesuai instruksi: ${prompt || 'Buat semenarik mungkin'}.`,
-          isEditing: false
+          isEditing: false,
+          durationNum: 15
         },
         {
           id: '02', time: '00:00:15', title: '2. Suasana & Keunggulan Kampus', duration: '00:20', status: 'Ready',
           narration: `"Di ${institutionName || 'sini'}, kami siap membantumu mewujudkan impian itu melalui program unggulan kami."`,
           visual: `Gaya visual: ${selectedTheme}. Memperlihatkan mahasiswa sedang beraktivitas, fasilitas modern.`,
-          isEditing: false
+          isEditing: false,
+          durationNum: 20
         },
         {
           id: '03', time: '00:00:35', title: '3. Promosi & Call to Action', duration: '00:10', status: 'Ready',
           narration: `"Jangan lewatkan momen ${eventContent || 'pendaftaran'} tahun ini. Yuk, raih mimpimu bersama kami!"`,
           visual: `Logo ${institutionName || 'kampus'} muncul di tengah layar dengan teks ajakan (Call to Action).`,
-          isEditing: false
+          isEditing: false,
+          durationNum: 10
         }
       ];
 
@@ -437,6 +442,21 @@ function NewProjectContent() {
         setIsRendering(false);
         isRenderingRef.current = false;
         return;
+      }
+
+      // 0. Auto-save storyboard before rendering
+      try {
+        const { storyboardService } = await import('@/services/storyboard.service');
+        const updatedSections = scenes.map(s => ({
+          section_type: s.title.replace(/^\d+\.\s*/, ''),
+          content: JSON.stringify({ narration: s.narration, visual: s.visual }),
+          duration: s.durationNum
+        }));
+        await storyboardService.updateStoryboard(savedStoryboardId, {
+          sections: updatedSections
+        });
+      } catch (err) {
+        console.warn("Gagal auto-save storyboard:", err);
       }
 
       // 1. Memanggil endpoint generate video backend
