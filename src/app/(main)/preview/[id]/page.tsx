@@ -226,24 +226,25 @@ export default function PreviewPage() {
                   </div>
                 </div>
                 
-                <div className={styles.videoSection} style={{ padding: 0, border: 'none', borderRadius: 0, height: 'auto', minHeight: '400px', backgroundColor: '#1a1a1a' }}>
-                  {vid.video_url ? (
-                    <video
-                      className={styles.videoPlayer}
-                      src={vid.video_url}
-                      controls
-                      playsInline
-                      poster={vid.thumbnail_url || undefined}
-                      style={{ maxHeight: '600px', width: '100%', objectFit: 'contain', backgroundColor: '#000', display: 'block' }}
-                    >
-                      Maaf, browser Anda tidak mendukung tag video.
-                    </video>
-                  ) : (
-                    <div className={styles.noVideo} style={{ minHeight: '400px', backgroundColor: '#f8f9fa' }}>
-                      <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#6c757d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
-                      <p>Video sedang diproses atau belum tersedia.</p>
-                    </div>
-                  )}
+                <div style={{ padding: '1.5rem', backgroundColor: '#fff', borderBottomLeftRadius: '16px', borderBottomRightRadius: '16px' }}>
+                  <div className={styles.videoSection}>
+                    {vid.video_url ? (
+                      <video
+                        className={styles.videoPlayer}
+                        src={vid.video_url}
+                        controls
+                        playsInline
+                        poster={vid.thumbnail_url || undefined}
+                      >
+                        Maaf, browser Anda tidak mendukung tag video.
+                      </video>
+                    ) : (
+                      <div className={styles.noVideo}>
+                        <svg width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#6c757d" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><polygon points="23 7 16 12 23 17 23 7"></polygon><rect x="1" y="5" width="15" height="14" rx="2" ry="2"></rect></svg>
+                        <p>Video sedang diproses atau belum tersedia.</p>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </div>
             );
