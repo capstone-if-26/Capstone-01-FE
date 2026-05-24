@@ -54,6 +54,11 @@ export interface ApiResponse<T> {
 }
 
 export const videoService = {
+  async listVideos(): Promise<ApiResponse<any[]>> {
+    const response = await api.get("/api/videos");
+    return response.data;
+  },
+
   async generateVideo(
     payload: GenerateVideoPayload
   ): Promise<ApiResponse<VideoGenerationJob>> {

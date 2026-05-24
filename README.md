@@ -2,7 +2,7 @@
 CAPSTONE 01 - AI Content Generator Platform
 
 Ini adalah frontend untuk project Capstone, menggunakan **Next.js 14** dan **TypeScript**.  
-Backend masih dalam tahap mock API, jadi semua request API masih menggunakan mock service.
+Backend telah terintegrasi penuh dengan Go API Service pada port 5000.
 
 ---
 

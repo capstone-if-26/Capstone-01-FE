@@ -209,3 +209,20 @@
     display: none; /* hide desktop user profile */
   }
 }
+/* --- Logout Button --- */
+.logoutBtn {
+  background: none;
+  border: none;
+  color: #adb5bd;
+  cursor: pointer;
+  padding: 0.5rem;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s;
+}
+.logoutBtn:hover {
+  background-color: #fee2e2;
+  color: #ef4444;
+}

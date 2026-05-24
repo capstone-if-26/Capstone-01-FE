@@ -24,6 +24,16 @@ export const getMe = async () => {
   return response.data;
 };
 
+export const updatePreferences = async (data: {
+  email_alerts?: boolean;
+  newsletter?: boolean;
+  public_profile?: boolean;
+  data_training?: boolean;
+}) => {
+  const response = await api.put("/api/auth/preferences", data);
+  return response.data;
+};
+
 export const refreshToken = async (refresh_token: string) => {
   const response = await api.post("/api/auth/refresh", {
     refresh_token,
@@ -45,4 +55,15 @@ export const changePassword = async (data: {
 export const deleteAccount = async () => {
   const response = await api.delete("/api/auth/account");
   return response.data;
+};
+
+export const getAllUsers = async () => {
+  const response = await api.get("/api/admin/users");
+  return response.data;
+};
+export const logout = () => {
+  localStorage.removeItem('access_token');
+  localStorage.removeItem('refresh_token');
+  localStorage.removeItem('userProfile');
+  window.location.href = '/login';
 };

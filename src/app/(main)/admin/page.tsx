@@ -1,0 +1,248 @@
+"use client";
+
+import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { getAllUsers, getMe } from "@/services/auth.service";
+import { addCredits } from "@/services/credit.service";
+import styles from "./page.module.css";
+
+interface User {
+  id: string;
+  name: string;
+  email: string;
+  role: string;
+  credits: number;
+  created_at: string;
+}
+
+export default function AdminPage() {
+  const router = useRouter();
+  const [users, setUsers] = useState<User[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [addAmounts, setAddAmounts] = useState<{ [key: string]: number }>({});
+  const [processing, setProcessing] = useState<{ [key: string]: boolean }>({});
+  const [searchQuery, setSearchQuery] = useState("");
+
+  const ITEMS_PER_PAGE = 10;
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    const initAdmin = async () => {
+      try {
+        const res = await getMe();
+        if (res.success && res.data) {
+          if (res.data.role !== "admin") {
+            router.push("/dashboard");
+            return;
+          }
+          // If admin, load users
+          loadUsers();
+        } else {
+          router.push("/dashboard");
+        }
+      } catch (err) {
+        router.push("/dashboard");
+      }
+    };
+
+    initAdmin();
+  }, [router]);
+
+  const loadUsers = async () => {
+    try {
+      setLoading(true);
+      const res = await getAllUsers();
+      if (res.success && res.data) {
+        setUsers(res.data);
+      }
+    } catch (error) {
+      console.error("Failed to load users:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleAddCredits = async (userId: string) => {
+    const amount = addAmounts[userId];
+    if (!amount || amount <= 0) return;
+
+    try {
+      setProcessing((prev) => ({ ...prev, [userId]: true }));
+      const res = await addCredits(userId, amount);
+      if (res.success) {
+        // Update locally
+        setUsers((prev) =>
+          prev.map((u) =>
+            u.id === userId ? { ...u, credits: u.credits + amount } : u
+          )
+        );
+        // Clear input
+        setAddAmounts((prev) => ({ ...prev, [userId]: 0 }));
+      }
+    } catch (error) {
+      console.error("Failed to add credits:", error);
+      alert("Failed to add credits");
+    } finally {
+      setProcessing((prev) => ({ ...prev, [userId]: false }));
+    }
+  };
+
+  const handleAmountChange = (userId: string, value: string) => {
+    const num = parseInt(value, 10);
+    setAddAmounts((prev) => ({
+      ...prev,
+      [userId]: isNaN(num) ? 0 : num,
+    }));
+  };
+
+  if (loading) {
+    return <div className={styles.loading}>Loading users...</div>;
+  }
+
+  return (
+    <div className={styles.container}>
+      <div className={styles.header}>
+        <h1 className={styles.title}>Admin Panel</h1>
+        <p className={styles.subtitle}>Manage users and AI credits</p>
+      </div>
+
+      <div className={styles.card}>
+        <div style={{ padding: '1rem', borderBottom: '1px solid #dee2e6' }}>
+          <input
+            type="text"
+            placeholder="Cari user berdasarkan email..."
+            value={searchQuery}
+            onChange={(e) => {
+              setSearchQuery(e.target.value);
+              setCurrentPage(1); // Reset to page 1 on search
+            }}
+            className={styles.input}
+            style={{ width: '100%', maxWidth: '400px' }}
+          />
+        </div>
+        <div className={styles.tableContainer}>
+          <table className={styles.table}>
+            <thead>
+              <tr>
+                <th>Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th>Current Credits</th>
+                <th>Add Credits</th>
+              </tr>
+            </thead>
+            <tbody>
+              {(() => {
+                const filteredUsers = users.filter(u => u.email.toLowerCase().includes(searchQuery.toLowerCase()));
+                return (
+                  <>
+                    {filteredUsers.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((u) => (
+                      <tr key={u.id}>
+                        <td>{u.name}</td>
+                  <td>{u.email}</td>
+                  <td>
+                    <span
+                      className={`${styles.roleBadge} ${
+                        u.role === "admin" ? styles.roleAdmin : styles.roleUser
+                      }`}
+                    >
+                      {u.role}
+                    </span>
+                  </td>
+                  <td>{u.credits.toLocaleString()}</td>
+                  <td>
+                    <div className={styles.actionCell}>
+                      <input
+                        type="number"
+                        min="1"
+                        placeholder="Amount"
+                        className={styles.input}
+                        value={addAmounts[u.id] || ""}
+                        onChange={(e) =>
+                          handleAmountChange(u.id, e.target.value)
+                        }
+                        disabled={processing[u.id]}
+                      />
+                      <button
+                        className={styles.btn}
+                        onClick={() => handleAddCredits(u.id)}
+                        disabled={
+                          processing[u.id] ||
+                          !addAmounts[u.id] ||
+                          addAmounts[u.id] <= 0
+                        }
+                      >
+                        {processing[u.id] ? "Adding..." : "Add"}
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              ))}
+              {filteredUsers.length === 0 && (
+                <tr>
+                  <td colSpan={5} style={{ textAlign: "center", padding: "2rem" }}>
+                    No users found matching "{searchQuery}"
+                  </td>
+                </tr>
+              )}
+                  </>
+                );
+              })()}
+            </tbody>
+          </table>
+        </div>
+        
+        {(() => {
+          const filteredUsers = users.filter(u => u.email.toLowerCase().includes(searchQuery.toLowerCase()));
+          const totalPages = Math.ceil(filteredUsers.length / ITEMS_PER_PAGE);
+          if (totalPages <= 1) return null;
+          
+          return (
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1rem', borderTop: '1px solid #dee2e6' }}>
+              <span style={{ fontSize: '0.9rem', color: '#6c757d' }}>
+                Halaman {currentPage} dari {totalPages}
+              </span>
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <button 
+                  className={styles.btn} 
+                  disabled={currentPage === 1}
+                  onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                  style={{ padding: '0.4rem 0.8rem', opacity: currentPage === 1 ? 0.5 : 1 }}
+                >
+                  Previous
+                </button>
+                
+                <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                    <button 
+                      key={page} 
+                      className={styles.btn}
+                      onClick={() => setCurrentPage(page)}
+                      style={{ 
+                        padding: '0.4rem 0.8rem', 
+                        backgroundColor: currentPage === page ? '#0d6efd' : 'transparent',
+                        color: currentPage === page ? 'white' : '#212529',
+                        border: currentPage === page ? 'none' : '1px solid #dee2e6'
+                      }}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                </div>
+
+                <button 
+                  className={styles.btn} 
+                  disabled={currentPage === totalPages}
+                  onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                  style={{ padding: '0.4rem 0.8rem', opacity: currentPage === totalPages ? 0.5 : 1 }}
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          );
+        })()}
+      </div>
+    </div>
+  );
+}

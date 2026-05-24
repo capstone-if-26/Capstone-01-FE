@@ -31,7 +31,16 @@ const handleSubmit = async (e: React.MouseEvent<HTMLButtonElement>) => {
     });
 
     if (res.success) {
-      router.push("/login");
+      if (res.data) {
+        const { access_token, refresh_token, user } = res.data;
+        if (access_token) localStorage.setItem("access_token", access_token);
+        if (refresh_token) localStorage.setItem("refresh_token", refresh_token);
+        if (user?.email) localStorage.setItem("registeredEmail", user.email);
+        if (user?.name) localStorage.setItem("registeredName", user.name);
+        router.push("/dashboard");
+      } else {
+        router.push("/login");
+      }
     }
   } catch (error: any) {
     alert(error.response?.data?.message || "Register gagal");

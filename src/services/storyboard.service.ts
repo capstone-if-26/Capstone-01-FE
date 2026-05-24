@@ -71,7 +71,7 @@ export interface UpdateStoryboardPayload {
   style?: string;
   sections?: {
     id?: string;
-    section_type: "hook" | "value" | "cta";
+    section_type: string;
     content: string;
     duration: number;
   }[];

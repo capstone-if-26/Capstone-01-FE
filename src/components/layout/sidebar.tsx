@@ -4,29 +4,40 @@ import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { useEffect, useState } from 'react';
 import styles from './sidebar.module.css';
+import { getMe, logout } from '@/services/auth.service';
 
 export default function Sidebar() {
   const pathname = usePathname();
   
-  // State untuk menyimpan nama dan inisial user
   const [userName, setUserName] = useState('Loading...');
   const [userInitial, setUserInitial] = useState('');
+  const [userRole, setUserRole] = useState('');
 
-  // Mengambil data user dari localStorage saat komponen Sidebar dimuat
   useEffect(() => {
-    const savedProfile = localStorage.getItem('userProfile');
-    
-    if (savedProfile) {
-      // Jika user sudah pernah update profil
-      const parsed = JSON.parse(savedProfile);
-      setUserName(parsed.fullName || parsed.displayName);
-      setUserInitial((parsed.displayName || parsed.fullName || 'U').charAt(0).toUpperCase());
-    } else {
-      // Jika baru saja login/register
-      const registeredName = localStorage.getItem('registeredName') || 'Guest User';
-      setUserName(registeredName);
-      setUserInitial(registeredName.charAt(0).toUpperCase());
-    }
+    const fetchUser = async () => {
+      try {
+        const res = await getMe();
+        if (res.success && res.data) {
+          const name = res.data.name || 'User';
+          setUserName(name);
+          setUserInitial(name.charAt(0).toUpperCase());
+          setUserRole(res.data.role || 'user');
+        }
+      } catch {
+        // Fallback to localStorage if API fails
+        const savedProfile = localStorage.getItem('userProfile');
+        if (savedProfile) {
+          const parsed = JSON.parse(savedProfile);
+          setUserName(parsed.fullName || parsed.displayName || 'User');
+          setUserInitial((parsed.displayName || parsed.fullName || 'U').charAt(0).toUpperCase());
+        } else {
+          const registeredName = localStorage.getItem('registeredName') || 'Guest User';
+          setUserName(registeredName);
+          setUserInitial(registeredName.charAt(0).toUpperCase());
+        }
+      }
+    };
+    fetchUser();
   }, []);
 
   // Fungsi untuk mengecek apakah menu sedang aktif (untuk warna biru)
@@ -81,16 +92,25 @@ export default function Sidebar() {
     },
   ];
 
+  if (userRole === 'admin') {
+    navItems.push({
+      href: '/admin',
+      label: 'Admin Panel',
+      active: isActive('/admin'),
+      icon: (
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/>
+        </svg>
+      ),
+    });
+  }
+
   return (
     <aside className={styles.sidebar}>
       {/* Logo -> hidden on mobile */}
       <div className={styles.logoContainer}>
         <div className={styles.logoIcon}>
-          {/* Logo Sevima AI */}
-          <svg width="28" height="28" viewBox="0 0 24 24" fill="#0d6efd" xmlns="http://www.w3.org/2000/svg">
-            <rect width="24" height="24" rx="6" fill="#0d6efd"/>
-            <path d="M12 6L13.5 10.5L18 12L13.5 13.5L12 18L10.5 13.5L6 12L10.5 10.5L12 6Z" fill="white"/>
-          </svg>
+          <img src="/favicon.png" alt="Sevima Logo" width={28} height={28} style={{ borderRadius: '6px' }} />
         </div>
         <div>
           <h2>Sevima AI</h2>
@@ -100,14 +120,6 @@ export default function Sidebar() {
 
       <nav className={styles.navigation}>
         <ul>
-          {/* Storyboard */}
-          {/* <li className={isActive('/storyboard') ? styles.active : ''}>
-            <Link href="/storyboard">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
-              Storyboard
-            </Link>
-          </li> */}
-          
           {navItems.map((item) => (
             <li key={item.href} className={item.active ? styles.active : ''}>
               <Link href={item.href}>
@@ -120,15 +132,22 @@ export default function Sidebar() {
       </nav>
 
       {/* User profile — hidden on mobile */}
-      <Link href="/profile" style={{ textDecoration: 'none' }}>
-        <div className={styles.userProfile}>
+      <div className={styles.userProfile}>
+        <Link href="/profile" className={styles.profileLink} style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '1rem', flex: 1 }}>
           <div className={styles.avatar}>{userInitial}</div>
           <div className={styles.userInfo}>
             <p className={styles.userName}>{userName}</p>
-            <p className={styles.userPlan}>Premium Plan</p>
+            <p className={styles.userPlan}>{userRole === 'admin' ? 'Admin' : 'Member'}</p>
           </div>
-        </div>
-      </Link>
+        </Link>
+        <button onClick={logout} className={styles.logoutBtn} title="Logout">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"></path>
+            <polyline points="16 17 21 12 16 7"></polyline>
+            <line x1="21" y1="12" x2="9" y2="12"></line>
+          </svg>
+        </button>
+      </div>
     </aside>
   );
 }

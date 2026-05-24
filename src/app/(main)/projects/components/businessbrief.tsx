@@ -4,6 +4,9 @@ import React from "react";
 import styles from "../projects.module.css";
 
 interface BusinessBriefProps {
+  projectName: string;
+  setProjectName: (value: string) => void;
+
   institutionName: string;
   setInstitutionName: (value: string) => void;
 
@@ -29,6 +32,8 @@ interface BusinessBriefProps {
 }
 
 export default function BusinessBrief({
+  projectName,
+  setProjectName,
   institutionName,
   setInstitutionName,
   institutionHistory,
@@ -175,6 +180,20 @@ export default function BusinessBrief({
                 <p className={styles.uploadSectionLabel}>Detail Institusi</p>
         
                 <div className={styles.formSectionCard}>
+                    <div className={styles.formGroup}>
+                    <label>
+                        Nama Project{" "}
+                        <span className={styles.labelOptional}>(Opsional)</span>
+                    </label>
+                    <input
+                        type="text"
+                        className={styles.input}
+                        placeholder="Contoh: Video Profil Kampus 2026"
+                        value={projectName}
+                        onChange={(e) => setProjectName(e.target.value)}
+                    />
+                    </div>
+
                     <div className={styles.formGroup}>
                     <label>
                         Nama Institusi{" "}

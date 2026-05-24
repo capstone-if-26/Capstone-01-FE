@@ -2,44 +2,69 @@
 
 import React, { useState, useEffect } from 'react';
 import styles from './profile.module.css';
+import { getMe, changePassword } from '@/services/auth.service';
 
 export default function ProfilePage() {
-  // State untuk memastikan komponen di-render di client (menghindari error SSR Next.js)
   const [mounted, setMounted] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
 
-  // State form dibiarkan kosong sebagai nilai awal
   const [formData, setFormData] = useState({
     fullName: '',
     displayName: '',
     email: '',
     phone: '',
-    bio: ''
+    bio: '',
+    role: '',
+    credits: 0,
   });
 
-  // Mengambil data dari localStorage saat halaman pertama kali dimuat
+  // Password change state
+  const [passwordData, setPasswordData] = useState({
+    old_password: '',
+    new_password: '',
+    confirm_password: '',
+  });
+  const [passwordMsg, setPasswordMsg] = useState('');
+
   useEffect(() => {
     setMounted(true);
-    
-    // Coba ambil profil yang sudah tersimpan
-    const savedProfile = localStorage.getItem('userProfile');
-    
-    if (savedProfile) {
-      // Jika user sudah pernah update profil, pakai data tersebut
-      setFormData(JSON.parse(savedProfile));
-    } else {
-      // Jika belum, ambil data dasar dari proses Login/Register
-      const registeredName = localStorage.getItem('registeredName') || 'Guest User';
-      const registeredEmail = localStorage.getItem('registeredEmail') || 'guest@sevima.com';
-      
-      setFormData({
-        fullName: registeredName,
-        // Buat display name otomatis dari kata pertama nama lengkap
-        displayName: registeredName.split(' ')[0], 
-        email: registeredEmail,
-        phone: '', // Dibiarkan kosong sesuai permintaan (diisi manual oleh user)
-        bio: ''
-      });
-    }
+
+    const fetchProfile = async () => {
+      try {
+        const res = await getMe();
+        if (res.success && res.data) {
+          const user = res.data;
+          // Try to merge with any locally saved extra fields (phone, bio)
+          const savedExtra = localStorage.getItem('userProfileExtra');
+          const extra = savedExtra ? JSON.parse(savedExtra) : {};
+
+          setFormData({
+            fullName: user.name || '',
+            displayName: (user.name || '').split(' ')[0],
+            email: user.email || '',
+            phone: extra.phone || '',
+            bio: extra.bio || '',
+            role: user.role || 'user',
+            credits: user.credits || 0,
+          });
+        }
+      } catch (err) {
+        console.error("Failed to fetch profile", err);
+        // Fallback to localStorage
+        const registeredName = localStorage.getItem('registeredName') || 'Guest User';
+        const registeredEmail = localStorage.getItem('registeredEmail') || 'guest@sevima.com';
+        setFormData(prev => ({
+          ...prev,
+          fullName: registeredName,
+          displayName: registeredName.split(' ')[0],
+          email: registeredEmail,
+        }));
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchProfile();
   }, []);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
@@ -47,43 +72,61 @@ export default function ProfilePage() {
   };
 
   const handleSave = () => {
-    // Simpan data terbaru ke localStorage agar tidak hilang saat di-refresh
-    localStorage.setItem('userProfile', JSON.stringify(formData));
-    
-    // Update juga nama dasar jika sewaktu-waktu dipakai di sidebar
-    localStorage.setItem('registeredName', formData.fullName);
-    
-    alert("Profile berhasil diperbarui!");
+    // Save extra fields locally (phone, bio are not in the backend User model)
+    localStorage.setItem('userProfileExtra', JSON.stringify({
+      phone: formData.phone,
+      bio: formData.bio,
+    }));
+    alert("Profil berhasil diperbarui!");
   };
 
-  // Jangan render UI sampai proses pembacaan localStorage selesai
-  if (!mounted) return null;
+  const handlePasswordChange = async () => {
+    setPasswordMsg('');
+    if (passwordData.new_password !== passwordData.confirm_password) {
+      setPasswordMsg('Password baru tidak cocok.');
+      return;
+    }
+    if (passwordData.new_password.length < 6) {
+      setPasswordMsg('Password baru minimal 6 karakter.');
+      return;
+    }
+    try {
+      await changePassword({
+        old_password: passwordData.old_password,
+        new_password: passwordData.new_password,
+      });
+      setPasswordMsg('Password berhasil diubah!');
+      setPasswordData({ old_password: '', new_password: '', confirm_password: '' });
+    } catch (err: any) {
+      setPasswordMsg(err?.response?.data?.message || 'Gagal mengubah password.');
+    }
+  };
+
+  if (!mounted || isLoading) return null;
 
   return (
     <div className={styles.container}>
       <header className={styles.header}>
         <h1>My Profile</h1>
-        <p>Manage your personal information and identity.</p>
+        <p>Kelola informasi pribadi dan identitas Anda.</p>
       </header>
 
       {/* Profile Summary Card */}
       <div className={styles.summaryCard}>
         <div className={styles.avatarWrapper}>
-          {/* Inisial nama sebagai avatar sementara */}
           <div style={{width: '100%', height: '100%', backgroundColor: '#ffe8cc', color: '#fd7e14', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2rem', fontWeight: 'bold'}}>
             {formData.displayName.charAt(0).toUpperCase()}
           </div>
-          <div className={styles.editAvatarBtn}>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M12 20h9"></path><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path></svg>
-          </div>
         </div>
         <div className={styles.userInfo}>
-          <h2>{formData.fullName} <span className={styles.badgePro}>PRO ACCOUNT</span></h2>
+          <h2>
+            {formData.fullName}{' '}
+            <span className={styles.badgePro}>
+              {formData.role === 'admin' ? 'ADMIN' : 'MEMBER'}
+            </span>
+          </h2>
           <p>{formData.email}</p>
-          <div className={styles.actionButtons}>
-            <button className={styles.btnPrimary}>Edit Profile</button>
-            <button className={styles.btnSecondary}>Change Password</button>
-          </div>
+          <p style={{ fontSize: '0.85rem', color: '#6c757d', marginTop: '0.25rem' }}>Credits: <strong>{formData.credits}</strong></p>
         </div>
       </div>
 
@@ -97,11 +140,12 @@ export default function ProfilePage() {
         <div className={styles.grid2}>
           <div className={styles.formGroup}>
             <label>Full Name</label>
-            <input type="text" name="fullName" className={styles.input} value={formData.fullName} onChange={handleChange} />
+            <input type="text" name="fullName" className={styles.input} value={formData.fullName} onChange={handleChange} disabled style={{opacity: 0.7, cursor: 'not-allowed'}} />
+            <small style={{color: '#868e96', fontSize: '0.75rem'}}>Nama diambil dari akun Anda.</small>
           </div>
           <div className={styles.formGroup}>
             <label>Display Name</label>
-            <input type="text" name="displayName" className={styles.input} value={formData.displayName} onChange={handleChange} />
+            <input type="text" name="displayName" className={styles.input} value={formData.displayName} onChange={handleChange} disabled style={{opacity: 0.7, cursor: 'not-allowed'}} />
           </div>
           <div className={styles.formGroup}>
             <label>Email Address</label>
@@ -121,6 +165,32 @@ export default function ProfilePage() {
 
         <div className={styles.footerActions}>
           <button className={styles.btnPrimary} onClick={handleSave} style={{padding: '0.75rem 2rem', fontSize: '1rem'}}>Save Changes</button>
+        </div>
+      </div>
+
+      {/* Change Password */}
+      <div className={styles.formCard}>
+        <h3>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#0d6efd" strokeWidth="2"><rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect><path d="M7 11V7a5 5 0 0 1 10 0v4"></path></svg>
+          Change Password
+        </h3>
+        <div className={styles.grid2}>
+          <div className={styles.formGroup}>
+            <label>Password Lama</label>
+            <input type="password" className={styles.input} value={passwordData.old_password} onChange={(e) => setPasswordData({...passwordData, old_password: e.target.value})} placeholder="Masukkan password lama" />
+          </div>
+          <div className={styles.formGroup}>
+            <label>Password Baru</label>
+            <input type="password" className={styles.input} value={passwordData.new_password} onChange={(e) => setPasswordData({...passwordData, new_password: e.target.value})} placeholder="Minimal 6 karakter" />
+          </div>
+          <div className={styles.formGroup}>
+            <label>Konfirmasi Password Baru</label>
+            <input type="password" className={styles.input} value={passwordData.confirm_password} onChange={(e) => setPasswordData({...passwordData, confirm_password: e.target.value})} placeholder="Ulangi password baru" />
+          </div>
+        </div>
+        {passwordMsg && <p style={{ color: passwordMsg.includes('berhasil') ? '#137333' : '#dc3545', fontSize: '0.9rem', marginTop: '0.5rem' }}>{passwordMsg}</p>}
+        <div className={styles.footerActions}>
+          <button className={styles.btnSecondary} onClick={handlePasswordChange} style={{padding: '0.75rem 2rem', fontSize: '1rem'}}>Update Password</button>
         </div>
       </div>
     </div>
