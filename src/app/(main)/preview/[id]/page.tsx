@@ -22,9 +22,27 @@ export default function PreviewPage() {
       try {
         const result = await getProjectById(projectId);
         if (result.success && result.data) {
-          setProject(result.data);
+          // Deduplicate videos to fix issue with identical videos appearing multiple times
           if (result.data.videos && result.data.videos.length > 0) {
-            setActiveTab(result.data.videos.length - 1);
+            const uniqueVideos = [];
+            const seenUrls = new Set();
+            
+            for (const v of result.data.videos) {
+              // If video has a URL and we've seen it before, skip it
+              if (v.video_url && seenUrls.has(v.video_url)) {
+                continue;
+              }
+              if (v.video_url) {
+                seenUrls.add(v.video_url);
+              }
+              uniqueVideos.push(v);
+            }
+            
+            result.data.videos = uniqueVideos;
+            setProject(result.data);
+            setActiveTab(uniqueVideos.length - 1);
+          } else {
+            setProject(result.data);
           }
         } else {
           setError(result.message || "Gagal memuat detail project.");
