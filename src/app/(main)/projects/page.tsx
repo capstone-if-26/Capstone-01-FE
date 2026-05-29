@@ -459,26 +459,57 @@ function NewProjectContent() {
         console.warn("Gagal auto-save storyboard:", err);
       }
 
-      // 1. Memanggil endpoint generate video backend
-      const res = await videoService.generateVideo({
-        project_id: pid,
-        storyboard_id: savedStoryboardId,
-        custom_prompt: prompt
-      });
+      // 1. Cek apakah ada video yang SEDANG DIPROSES
+      let videoIdToPoll = null;
+      try {
+        const variantsRes = await videoService.getStoryboardVariants(savedStoryboardId);
+        if (variantsRes.success && variantsRes.data && variantsRes.data.length > 0) {
+          // Hanya peduli dengan video yang sedang diproses
+          const video = variantsRes.data[0];
+          if (video.status === 'pending' || video.status === 'processing' || video.status === 'stitching_video') {
+            videoIdToPoll = video.id;
+          }
+        }
+      } catch (e) {
+        console.log("No existing video found or error fetching variants", e);
+      }
+
+      // 2. Memanggil endpoint generate video backend jika belum ada yang diproses
+      if (!videoIdToPoll) {
+        try {
+          const res = await videoService.generateVideo({
+            project_id: pid,
+            storyboard_id: savedStoryboardId,
+            custom_prompt: prompt
+          });
+          videoIdToPoll = (res.data as any).video_id;
+        } catch (err: any) {
+          const msg = err?.response?.data?.message;
+          if (msg === "sedang ada proses generate video yang berjalan untuk storyboard ini") {
+            // Coba ambil ID video yang sedang diproses
+            try {
+              const variantsRes = await videoService.getStoryboardVariants(savedStoryboardId);
+              if (variantsRes.success && variantsRes.data && variantsRes.data.length > 0) {
+                videoIdToPoll = variantsRes.data[0].id;
+              }
+            } catch (e) {}
+          }
+          if (!videoIdToPoll) throw err;
+        }
+      }
       
-      const videoId = (res.data as any).video_id;
-      if (!videoId) {
+      if (!videoIdToPoll) {
         throw new Error("Video ID tidak ditemukan di respons backend");
       }
 
-      // 2. Polling progress dengan batas maksimum tertentu
+      // 3. Polling progress dengan batas maksimum tertentu
       let currentProgress = 15;
       const progressInterval = setInterval(() => {
         setRenderProgress(prev => Math.min(prev + 5, 85));
       }, 3000);
 
       await videoService.pollUntilComplete(
-        videoId,
+        videoIdToPoll,
         (status) => {
            console.log("Status video saat ini:", status.status);
            if (status.status === "stitching_video") {
