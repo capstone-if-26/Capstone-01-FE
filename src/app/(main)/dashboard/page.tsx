@@ -122,12 +122,32 @@ export default function DashboardPage() {
     }
   };
 
-  const getThumbnail = (project: Project) => {
-    if (project.videos && project.videos.length > 0) {
-      const latestVideo = project.videos[project.videos.length - 1];
-      if (latestVideo.thumbnail_url) return latestVideo.thumbnail_url;
-    }
-    return '';
+  // Ambil video scene 1 (hook) dari versi terbaru — satu-satunya yang dijadikan thumbnail project
+  const getHookVideo = (project: Project): any => {
+    const completed = (project.videos || [])
+      .filter((v: any) => !!v.video_url)
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    return completed.find((v: any) => v.scene_index === 1 || v.section_type === 'hook') ?? completed[0] ?? null;
+  };
+
+  // Thumbnail hanya dari video scene 1
+  const getThumbnail = (project: Project): string => {
+    return getHookVideo(project)?.thumbnail_url || '';
+  };
+
+  // Total durasi = jumlah durasi 3 scene terbaru yang sudah selesai
+  const getTotalDuration = (project: Project): number => {
+    const completed = (project.videos || [])
+      .filter((v: any) => !!v.video_url)
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    return completed.slice(0, 3).reduce((sum: number, v: any) => sum + (v.duration || 0), 0);
+  };
+
+  const fmtDuration = (totalSec: number): string => {
+    if (totalSec <= 0) return '0:00';
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
   return (
@@ -135,7 +155,7 @@ export default function DashboardPage() {
       {/* Hero Section */}
       <section className={styles.heroSection}>
         <div>
-          <h1>Halo, Kreator! 👋</h1>
+          <h1>Halo, Kreator!</h1>
           <p>Siap untuk membuat konten AI yang luar biasa hari ini?</p>
         </div>
         <Link href="/projects" className={styles.primaryButton}>
@@ -192,8 +212,11 @@ export default function DashboardPage() {
           ) : (
             recentContents.filter(p => p.videos && p.videos.length > 0 && p.videos[p.videos.length - 1].video_url).slice(0, 8).map((item) => {
               const video = item.videos![item.videos!.length - 1];
+              const hookVideo = getHookVideo(item);
               const isProcessing = ['pending', 'queued', 'generating_assets', 'processing', 'stitching_video'].includes(video.status);
               const videoUrl = video.video_url;
+              const hookVideoUrl = hookVideo?.video_url || videoUrl;
+              const totalDuration = getTotalDuration(item);
               const targetUrl = videoUrl ? `/preview/${item.id}` : `/projects?projectId=${item.id}`;
               
               return (
@@ -207,13 +230,13 @@ export default function DashboardPage() {
                   style={{ cursor: 'pointer' }}
                 >
                     {getThumbnail(item) ? (
-                      <img 
-                        src={getThumbnail(item)} 
-                        alt={item.name || 'Project thumbnail'} 
-                        style={{ width: '100%', height: '100%', objectFit: 'cover' }} 
+                      <img
+                        src={getThumbnail(item)}
+                        alt={item.name || 'Project thumbnail'}
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                       />
-                    ) : videoUrl ? (
-                      <video src={videoUrl} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : hookVideoUrl ? (
+                      <video src={hookVideoUrl} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                     ) : isProcessing ? (
                       <div style={{ width: '100%', height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', backgroundColor: '#e9ecef', color: '#0d6efd' }}>
                         <div className={styles.spinnerSmall} style={{ width: '24px', height: '24px', borderWidth: '3px', marginBottom: '8px' }}></div>
@@ -225,15 +248,7 @@ export default function DashboardPage() {
                       </div>
                     )}
                     <span className={styles.duration}>
-                      {videoUrl ? (() => {
-                        const dur = video.duration || 0;
-                        if (dur > 0) {
-                          const m = Math.floor(dur / 60);
-                          const s = dur % 60;
-                          return `${m}:${s.toString().padStart(2, '0')}`;
-                        }
-                        return '0:06';
-                      })() : (isProcessing ? "Processing" : "--:--")}
+                      {videoUrl ? fmtDuration(totalDuration) : (isProcessing ? 'Processing' : '--:--')}
                     </span>
                   </div>
                   <h4 

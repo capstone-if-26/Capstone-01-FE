@@ -137,12 +137,31 @@ export default function LibraryPage() {
     }
   };
 
-  const getThumbnail = (project: Project) => {
-    if (project.videos && project.videos.length > 0) {
-      const latestVideo = project.videos[project.videos.length - 1];
-      if (latestVideo.thumbnail_url) return latestVideo.thumbnail_url;
-    }
-    return '';
+  // Thumbnail hanya dari video scene 1 (hook) versi terbaru
+  const getHookVideo = (project: Project): any => {
+    const completed = (project.videos || [])
+      .filter((v: any) => !!v.video_url)
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    return completed.find((v: any) => v.scene_index === 1 || v.section_type === 'hook') ?? completed[0] ?? null;
+  };
+
+  const getThumbnail = (project: Project): string => {
+    return getHookVideo(project)?.thumbnail_url || '';
+  };
+
+  // Total durasi 3 scene terbaru yang selesai
+  const getTotalDuration = (project: Project): number => {
+    const completed = (project.videos || [])
+      .filter((v: any) => !!v.video_url)
+      .sort((a: any, b: any) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
+    return completed.slice(0, 3).reduce((sum: number, v: any) => sum + (v.duration || 0), 0);
+  };
+
+  const fmtDuration = (totalSec: number): string => {
+    if (totalSec <= 0) return '0:00';
+    const m = Math.floor(totalSec / 60);
+    const s = totalSec % 60;
+    return `${m}:${s.toString().padStart(2, '0')}`;
   };
 
   const filteredProjects = projects.filter(p => {
@@ -230,7 +249,10 @@ export default function LibraryPage() {
         ) : (
           filteredProjects.slice((currentPage - 1) * ITEMS_PER_PAGE, currentPage * ITEMS_PER_PAGE).map((project) => {
             const video = project.videos && project.videos.length > 0 ? project.videos[project.videos.length - 1] : null;
+            const hookVideo = getHookVideo(project);
             const videoUrl = video?.video_url;
+            const hookVideoUrl = hookVideo?.video_url || videoUrl;
+            const totalDuration = getTotalDuration(project);
             const targetUrl = videoUrl ? `/preview/${project.id}` : `/projects?projectId=${project.id}`;
             const isProcessing = video ? ['pending', 'queued', 'generating_assets', 'processing', 'stitching_video'].includes(video.status) : false;
 
@@ -246,8 +268,8 @@ export default function LibraryPage() {
               >
                   {getThumbnail(project) ? (
                     <img src={getThumbnail(project)} alt={project.name || 'Project'} />
-                  ) : videoUrl ? (
-                    <video src={videoUrl} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  ) : hookVideoUrl ? (
+                    <video src={hookVideoUrl} muted playsInline preload="metadata" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   ) : isProcessing ? (
                     <div style={{ width: '100%', height: '100%', backgroundColor: '#212529', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#0d6efd' }}>
                       <div className={styles.spinnerSmall} style={{ width: '24px', height: '24px', borderWidth: '3px', marginBottom: '8px' }}></div>
@@ -260,11 +282,7 @@ export default function LibraryPage() {
                   )}
                   {videoUrl && (
                     <span className={styles.duration}>
-                      {(() => {
-                        const dur = video?.duration || 0;
-                        if (dur > 0) { const m = Math.floor(dur / 60); const s = dur % 60; return `${m}:${s.toString().padStart(2, '0')}`; }
-                        return '0:06';
-                      })()}
+                      {fmtDuration(totalDuration)}
                     </span>
                   )}
                   <span className={`
