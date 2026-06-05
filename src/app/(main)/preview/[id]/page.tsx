@@ -25,11 +25,8 @@ export default function PreviewPage() {
   const [editingTitleValue, setEditingTitleValue] = useState('');
   const [isSavingTitle, setIsSavingTitle] = useState(false);
 
-  // State edit narasi/visual per section_type: { hook: { isEditing, narration, visual, isSaving } }
-  const [sectionEdit, setSectionEdit] = useState<Record<string, { isEditing: boolean; narration: string; visual: string; isSaving: boolean }>>({});
-
-  // State regenerate per scene: { [videoId]: { isOpen, prompt, isLoading } }
-  const [regenState, setRegenState] = useState<Record<string, { isOpen: boolean; prompt: string; isLoading: boolean }>>({});
+  // State regenerate per scene — narration/visual bisa diedit langsung dari sini
+  const [regenState, setRegenState] = useState<Record<string, { isOpen: boolean; prompt: string; narration: string; visual: string; isLoading: boolean }>>({});
   const pollingRefs = useRef<Record<string, boolean>>({});
 
   // Grup video per versi: setiap generate = 3 video (hook+value+cta) = 1 versi
@@ -97,26 +94,16 @@ export default function PreviewPage() {
       try {
         const result = await getProjectById(projectId);
         if (result.success && result.data) {
-          // Deduplicate videos to fix issue with identical videos appearing multiple times
           if (result.data.videos && result.data.videos.length > 0) {
-            const uniqueVideos = [];
-            const seenUrls = new Set();
-            
-            for (const v of result.data.videos) {
-              // If video has a URL and we've seen it before, skip it
-              if (v.video_url && seenUrls.has(v.video_url)) {
-                continue;
-              }
-              if (v.video_url) {
-                seenUrls.add(v.video_url);
-              }
-              uniqueVideos.push(v);
-            }
-            
+            // Deduplicate by ID only — sibling copies share the same URL but are distinct records
+            const seenIds = new Set();
+            const uniqueVideos = result.data.videos.filter((v: any) => {
+              if (seenIds.has(v.id)) return false;
+              seenIds.add(v.id);
+              return true;
+            });
             result.data.videos = uniqueVideos;
             setProject(result.data);
-            // activeTab = indeks versi terakhir (bukan indeks video terakhir)
-            // 1 versi = 3 video, jadi versi terakhir = ceil(total/3) - 1
             setActiveTab(Math.max(0, Math.ceil(uniqueVideos.length / 3) - 1));
           } else {
             setProject(result.data);
@@ -181,44 +168,6 @@ export default function PreviewPage() {
     }
   };
 
-  const startEditSection = (sectionType: string, currentNarration: string, currentVisual: string) => {
-    setSectionEdit(prev => ({
-      ...prev,
-      [sectionType]: { isEditing: true, narration: currentNarration, visual: currentVisual, isSaving: false },
-    }));
-  };
-
-  const cancelEditSection = (sectionType: string) => {
-    setSectionEdit(prev => ({ ...prev, [sectionType]: { ...prev[sectionType], isEditing: false } }));
-  };
-
-  const saveSectionEdit = async (sectionType: string) => {
-    const edit = sectionEdit[sectionType];
-    if (!edit || !storyboardId) return;
-    setSectionEdit(prev => ({ ...prev, [sectionType]: { ...prev[sectionType], isSaving: true } }));
-
-    const newContent = JSON.stringify({ narration: edit.narration, visual: edit.visual });
-
-    // Bangun payload semua sections — match by normalized section type
-    const updatedSections = rawSections.map((sec: any, i: number) => ({
-      section_type: sec.section_type,
-      content: normalizeSecType(sec.section_type, i) === sectionType ? newContent : sec.content,
-      duration: sec.duration,
-    }));
-
-    try {
-      await storyboardService.updateStoryboard(storyboardId, { sections: updatedSections });
-      // Update rawSections lokal
-      setRawSections(prev => prev.map((sec: any) =>
-        sec.section_type === sectionType ? { ...sec, content: newContent } : sec
-      ));
-      setSectionEdit(prev => ({ ...prev, [sectionType]: { ...prev[sectionType], isEditing: false, isSaving: false } }));
-    } catch {
-      alert('Gagal menyimpan perubahan narasi.');
-      setSectionEdit(prev => ({ ...prev, [sectionType]: { ...prev[sectionType], isSaving: false } }));
-    }
-  };
-
   const handleDownload = async (url: string, filename: string) => {
     try {
       const response = await fetch(url);
@@ -238,51 +187,91 @@ export default function PreviewPage() {
     }
   };
 
-  const openRegen = (videoId: string) => {
-    setRegenState(prev => ({ ...prev, [videoId]: { isOpen: true, prompt: prev[videoId]?.prompt || '', isLoading: false } }));
+  const openRegen = (videoId: string, narration: string, visual: string) => {
+    setRegenState(prev => ({
+      ...prev,
+      [videoId]: { isOpen: true, prompt: prev[videoId]?.prompt || '', narration, visual, isLoading: false },
+    }));
   };
 
   const closeRegen = (videoId: string) => {
-    setRegenState(prev => ({ ...prev, [videoId]: { ...prev[videoId], isOpen: false } }));
+    setRegenState(prev => ({
+      ...prev,
+      [videoId]: { isOpen: false, prompt: prev[videoId]?.prompt || '', narration: prev[videoId]?.narration || '', visual: prev[videoId]?.visual || '', isLoading: false },
+    }));
   };
 
   const handleRegenScene = async (videoId: string) => {
+    const regen = regenState[videoId];
     setRegenState(prev => ({ ...prev, [videoId]: { ...prev[videoId], isLoading: true } }));
     try {
-      const res = await videoService.regenerateScene(videoId, regenState[videoId]?.prompt || '');
+      // Jika narasi/visual diedit, simpan ke storyboard dulu agar versi baru pakai konten terkini
+      const targetVid = project?.videos?.find((v: any) => v.id === videoId);
+      const secType = (targetVid?.section_type || '').toLowerCase();
+      const fallback = storyboardMap[secType] ?? { narration: '', visual: '' };
+      const origNarration = targetVid?.narrator_text || fallback.narration;
+      const origVisual    = targetVid?.visual_text   || fallback.visual;
+
+      if (storyboardId && (regen.narration !== origNarration || regen.visual !== origVisual)) {
+        const newContent = JSON.stringify({ narration: regen.narration, visual: regen.visual });
+        const updatedSections = rawSections.map((sec: any, i: number) => ({
+          section_type: sec.section_type,
+          content: normalizeSecType(sec.section_type, i) === secType ? newContent : sec.content,
+          duration: sec.duration,
+        }));
+        await storyboardService.updateStoryboard(storyboardId, { sections: updatedSections });
+        setRawSections(prev => prev.map((sec: any, i: number) =>
+          normalizeSecType(sec.section_type, i) === secType ? { ...sec, content: newContent } : sec
+        ));
+      }
+
+      const res = await videoService.regenerateScene(videoId, regen?.prompt || '');
       if (!res.success) throw new Error(res.message);
 
-      setRegenState(prev => ({ ...prev, [videoId]: { isOpen: false, prompt: '', isLoading: false } }));
+      const newVideoId = res.data.new_video_id;
 
-      // Update video in project state to processing immediately
-      setProject(prev => {
-        if (!prev?.videos) return prev;
-        return { ...prev, videos: prev.videos.map((v: any) =>
-          v.id === videoId ? { ...v, status: 'processing', video_url: null, thumbnail_url: null } : v
-        )};
-      });
+      // Tutup prompt UI
+      setRegenState(prev => ({ ...prev, [videoId]: { isOpen: false, prompt: '', narration: '', visual: '', isLoading: false } }));
 
-      // Guard against duplicate polling
-      if (pollingRefs.current[videoId]) return;
-      pollingRefs.current[videoId] = true;
+      // Re-fetch project untuk tampilkan versi baru (2 copy + 1 pending = tab baru)
+      const refreshed = await getProjectById(projectId);
+      if (refreshed.success && refreshed.data) {
+        const totalVids: number = (refreshed.data.videos || []).length;
+        const newVersionIdx = Math.max(0, Math.ceil(totalVids / 3) - 1);
+        setProject(refreshed.data);
+        setActiveTab(newVersionIdx);
+      }
 
+      // Guard duplicate polling
+      if (pollingRefs.current[newVideoId]) return;
+      pollingRefs.current[newVideoId] = true;
+
+      // Poll new_video_id sampai selesai
       await videoService.pollUntilComplete(
-        videoId,
+        newVideoId,
         (status) => {
           setProject(prev => {
             if (!prev?.videos) return prev;
-            return { ...prev, videos: prev.videos.map((v: any) =>
-              v.id === videoId
-                ? { ...v, status: status.status, video_url: status.video_url, thumbnail_url: status.thumbnail_url }
-                : v
-            )};
+            return {
+              ...prev,
+              videos: prev.videos.map((v: any) =>
+                v.id === newVideoId
+                  ? { ...v, status: status.status, video_url: status.video_url, thumbnail_url: status.thumbnail_url }
+                  : v
+              ),
+            };
           });
         },
         5000,
         120
       );
 
-      pollingRefs.current[videoId] = false;
+      pollingRefs.current[newVideoId] = false;
+
+      // Final re-fetch untuk data akurat
+      const final = await getProjectById(projectId);
+      if (final.success && final.data) setProject(final.data);
+
     } catch (err: any) {
       setRegenState(prev => ({ ...prev, [videoId]: { ...prev[videoId], isLoading: false } }));
       alert(err?.response?.data?.message || 'Gagal memulai regenerasi scene.');
@@ -573,12 +562,27 @@ export default function PreviewPage() {
               const isReady = !!vid.video_url;
               const statusLabel = isReady ? 'Ready' : isProcessing ? 'Refining...' : (vid.status || 'Draft');
 
-              const regen = regenState[vid.id] || { isOpen: false, prompt: '', isLoading: false };
-              const storyboard = storyboardMap[(vid.section_type || '').toLowerCase()]
+              const regen = regenState[vid.id] || { isOpen: false, prompt: '', narration: '', visual: '', isLoading: false };
+
+              // Gunakan narrator_text/visual_text yang tersimpan di video (diambil saat generate)
+              // Fallback ke storyboardMap untuk video lama yang belum punya field ini
+              const fallback = storyboardMap[(vid.section_type || '').toLowerCase()]
                 ?? storyboardMap[String(sIdx)]
                 ?? { narration: '', visual: '' };
-              const secType = (vid.section_type || '').toLowerCase() || ['hook', 'value', 'cta'][sIdx] || `sec-${sIdx}`;
-              const secEdit = sectionEdit[secType] || { isEditing: false, narration: storyboard.narration, visual: storyboard.visual, isSaving: false };
+              const storyboard = {
+                narration: vid.narrator_text || fallback.narration,
+                visual:    vid.visual_text   || fallback.visual,
+              };
+
+              // Bandingkan dengan versi sebelumnya untuk highlight perbedaan
+              const prevVersionVids: any[] = activeTab > 0 ? (versions[activeTab - 1] || []) : [];
+              const prevVid = prevVersionVids.find((v: any) => v.section_type === vid.section_type);
+              const prevNarration = prevVid?.narrator_text || fallback.narration;
+              const prevVisual    = prevVid?.visual_text   || fallback.visual;
+              const narrationDiff = !!(vid.narrator_text && prevNarration && vid.narrator_text !== prevNarration);
+              const visualDiff    = !!(vid.visual_text    && prevVisual    && vid.visual_text    !== prevVisual);
+
+
 
               // Hitung timestamp akumulatif
               const prevSec = (versions[activeTab] || []).slice(0, sIdx).reduce((s: number, v: any) => s + (v.duration || 6), 0);
@@ -617,7 +621,7 @@ export default function PreviewPage() {
                         </span>
                         {!isProcessing && (
                           <button
-                            onClick={() => regen.isOpen ? closeRegen(vid.id) : openRegen(vid.id)}
+                            onClick={() => regen.isOpen ? closeRegen(vid.id) : openRegen(vid.id, storyboard.narration, storyboard.visual)}
                             style={{ padding: '0.35rem 0.85rem', fontSize: '0.78rem', backgroundColor: regen.isOpen ? '#eef2ff' : 'white', color: regen.isOpen ? '#4f46e5' : '#495057', border: `1px solid ${regen.isOpen ? '#c7d2fe' : '#ced4da'}`, borderRadius: '50px', display: 'flex', alignItems: 'center', gap: '0.3rem', cursor: 'pointer', fontWeight: 500 }}
                           >
                             <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 .49-3.5"/></svg>
@@ -636,30 +640,62 @@ export default function PreviewPage() {
                       </div>
                     </div>
 
-                    {/* Inline re-generate prompt */}
+                    {/* Area Re-generate — narasi, visual, dan instruksi tambahan */}
                     {regen.isOpen && (
-                      <div style={{ padding: '0.85rem 1.25rem', borderBottom: '1px solid #e9ecef', backgroundColor: '#f5f7ff', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
-                        <p style={{ margin: 0, fontSize: '0.78rem', color: '#4f46e5', fontWeight: 600 }}>
-                          Instruksi tambahan untuk scene ini (opsional)
-                        </p>
-                        <textarea
-                          value={regen.prompt}
-                          onChange={(e) => setRegenState(prev => ({ ...prev, [vid.id]: { ...prev[vid.id], prompt: e.target.value } }))}
-                          placeholder="Contoh: gunakan tone lebih formal, tambahkan nuansa modern, fokus pada fasilitas lab..."
-                          rows={2}
-                          style={{ width: '100%', padding: '0.55rem 0.75rem', border: '1px solid #c7d2fe', borderRadius: '8px', fontSize: '0.83rem', fontFamily: 'inherit', resize: 'none', outline: 'none', boxSizing: 'border-box', backgroundColor: 'white' }}
-                        />
-                        <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                          <button onClick={() => closeRegen(vid.id)} style={{ padding: '0.35rem 0.9rem', fontSize: '0.8rem', backgroundColor: 'white', color: '#6c757d', border: '1px solid #dee2e6', borderRadius: '50px', cursor: 'pointer' }}>
-                            Batal
-                          </button>
-                          <button
-                            onClick={() => handleRegenScene(vid.id)}
-                            disabled={regen.isLoading}
-                            style={{ padding: '0.35rem 1.1rem', fontSize: '0.8rem', backgroundColor: regen.isLoading ? '#ced4da' : '#4f46e5', color: 'white', border: 'none', borderRadius: '50px', cursor: regen.isLoading ? 'not-allowed' : 'pointer', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-                          >
-                            {regen.isLoading ? 'Memproses...' : 'Proses Re-generate'}
-                          </button>
+                      <div style={{ padding: '1rem 1.25rem', borderBottom: '1px solid #e9ecef', backgroundColor: '#f5f7ff', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {/* AI Narration editable */}
+                        <div>
+                          <label style={{ fontSize: '0.6rem', fontWeight: 800, color: '#0d6efd', textTransform: 'uppercase' as const, letterSpacing: '0.07em', display: 'block', marginBottom: '0.3rem' }}>
+                            AI Narration
+                          </label>
+                          <textarea
+                            value={regen.narration}
+                            onChange={(e) => setRegenState(prev => ({ ...prev, [vid.id]: { ...prev[vid.id], narration: e.target.value } }))}
+                            rows={3}
+                            style={{ width: '100%', padding: '0.55rem 0.75rem', border: '1.5px solid #0d6efd', borderRadius: '8px', fontSize: '0.82rem', fontFamily: 'inherit', lineHeight: 1.55, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontStyle: 'italic' }}
+                          />
+                        </div>
+                        {/* Visual Description editable */}
+                        <div>
+                          <label style={{ fontSize: '0.6rem', fontWeight: 800, color: '#6b7280', textTransform: 'uppercase' as const, letterSpacing: '0.07em', display: 'block', marginBottom: '0.3rem' }}>
+                            Visual Description
+                          </label>
+                          <textarea
+                            value={regen.visual}
+                            onChange={(e) => setRegenState(prev => ({ ...prev, [vid.id]: { ...prev[vid.id], visual: e.target.value } }))}
+                            rows={2}
+                            style={{ width: '100%', padding: '0.55rem 0.75rem', border: '1.5px solid #ced4da', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'inherit', lineHeight: 1.5, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontStyle: 'italic', color: '#6b7280' }}
+                          />
+                        </div>
+                        {/* Instruksi tambahan */}
+                        <div>
+                          <label style={{ fontSize: '0.6rem', fontWeight: 800, color: '#7c3aed', textTransform: 'uppercase' as const, letterSpacing: '0.07em', display: 'block', marginBottom: '0.3rem' }}>
+                            Instruksi tambahan (opsional)
+                          </label>
+                          <textarea
+                            value={regen.prompt}
+                            onChange={(e) => setRegenState(prev => ({ ...prev, [vid.id]: { ...prev[vid.id], prompt: e.target.value } }))}
+                            placeholder="Contoh: tone lebih formal, nuansa modern, fokus pada fasilitas lab..."
+                            rows={2}
+                            style={{ width: '100%', padding: '0.55rem 0.75rem', border: '1px solid #c4b5fd', borderRadius: '8px', fontSize: '0.8rem', fontFamily: 'inherit', resize: 'none', outline: 'none', boxSizing: 'border-box', backgroundColor: 'white' }}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '0.5rem' }}>
+                          <span style={{ fontSize: '0.75rem', color: '#6b7280' }}>
+                            Biaya: <strong style={{ color: '#4f46e5' }}>{vid.duration ?? 6} kredit</strong>
+                          </span>
+                          <div style={{ display: 'flex', gap: '0.5rem' }}>
+                            <button onClick={() => closeRegen(vid.id)} style={{ padding: '0.35rem 0.9rem', fontSize: '0.8rem', backgroundColor: 'white', color: '#6c757d', border: '1px solid #dee2e6', borderRadius: '50px', cursor: 'pointer' }}>
+                              Batal
+                            </button>
+                            <button
+                              onClick={() => handleRegenScene(vid.id)}
+                              disabled={regen.isLoading}
+                              style={{ padding: '0.35rem 1.1rem', fontSize: '0.8rem', backgroundColor: regen.isLoading ? '#ced4da' : '#4f46e5', color: 'white', border: 'none', borderRadius: '50px', cursor: regen.isLoading ? 'not-allowed' : 'pointer', fontWeight: 600 }}
+                            >
+                              {regen.isLoading ? 'Memproses...' : 'Proses Re-generate'}
+                            </button>
+                          </div>
                         </div>
                       </div>
                     )}
@@ -701,73 +737,42 @@ export default function PreviewPage() {
                         </div>
                       </div>
 
-                      {/* Storyboard content — kanan */}
+                      {/* Storyboard content — kanan (read-only, edit hanya via Re-generate) */}
                       <div style={{ flex: 1, padding: '1rem 1.25rem', display: 'flex', flexDirection: 'column', gap: '0.85rem', overflow: 'hidden' }}>
 
-                        {/* AI Narration */}
-                        <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                            <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#0d6efd', textTransform: 'uppercase' as const, letterSpacing: '0.07em', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                              <svg width="10" height="10" viewBox="0 0 24 24" fill={dotColor}><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke={dotColor} strokeWidth="2"/><line x1="12" y1="19" x2="12" y2="23" stroke={dotColor} strokeWidth="2"/><line x1="8" y1="23" x2="16" y2="23" stroke={dotColor} strokeWidth="2"/></svg>
-                              AI Narration
+                        {/* Instruksi tambahan yang dipakai saat regen (jika ada) */}
+                        {vid.regenerate_prompt && (
+                          <div style={{ backgroundColor: '#f5f0ff', border: '1px solid #d8b4fe', borderRadius: '8px', padding: '0.5rem 0.75rem' }}>
+                            <div style={{ fontSize: '0.58rem', fontWeight: 800, color: '#7c3aed', textTransform: 'uppercase' as const, letterSpacing: '0.07em', marginBottom: '0.2rem' }}>
+                              Instruksi tambahan
                             </div>
-                            {!secEdit.isEditing ? (
-                              <button
-                                onClick={() => startEditSection(secType, storyboard.narration, storyboard.visual)}
-                                style={{ fontSize: '0.7rem', color: '#6c757d', background: 'none', border: '1px solid #dee2e6', borderRadius: '50px', padding: '0.15rem 0.6rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.25rem' }}
-                              >
-                                <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-                                Edit
-                              </button>
-                            ) : (
-                              <div style={{ display: 'flex', gap: '0.3rem' }}>
-                                <button
-                                  onClick={() => saveSectionEdit(secType)}
-                                  disabled={secEdit.isSaving}
-                                  style={{ fontSize: '0.7rem', color: 'white', backgroundColor: secEdit.isSaving ? '#ced4da' : '#0d6efd', border: 'none', borderRadius: '50px', padding: '0.2rem 0.7rem', cursor: secEdit.isSaving ? 'not-allowed' : 'pointer', fontWeight: 600 }}
-                                >
-                                  {secEdit.isSaving ? 'Menyimpan...' : 'Simpan'}
-                                </button>
-                                <button
-                                  onClick={() => cancelEditSection(secType)}
-                                  style={{ fontSize: '0.7rem', color: '#6c757d', background: 'white', border: '1px solid #dee2e6', borderRadius: '50px', padding: '0.2rem 0.6rem', cursor: 'pointer' }}
-                                >
-                                  Batal
-                                </button>
-                              </div>
-                            )}
-                          </div>
-                          {secEdit.isEditing ? (
-                            <textarea
-                              value={secEdit.narration}
-                              onChange={(e) => setSectionEdit(prev => ({ ...prev, [secType]: { ...prev[secType], narration: e.target.value } }))}
-                              rows={4}
-                              style={{ width: '100%', padding: '0.55rem 0.7rem', border: '1.5px solid #0d6efd', borderRadius: '8px', fontSize: '0.82rem', fontFamily: 'inherit', lineHeight: 1.55, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontStyle: 'italic', color: '#1f2937' }}
-                            />
-                          ) : (
-                            <p style={{ margin: 0, fontSize: '0.83rem', color: '#1f2937', fontStyle: 'italic', lineHeight: 1.65, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
-                              {storyboard.narration ? `"${storyboard.narration}"` : '—'}
+                            <p style={{ margin: 0, fontSize: '0.78rem', color: '#5b21b6', fontStyle: 'italic', lineHeight: 1.5 }}>
+                              {vid.regenerate_prompt}
                             </p>
-                          )}
+                          </div>
+                        )}
+
+                        {/* AI Narration — read only, highlight jika berbeda dari versi sebelumnya */}
+                        <div style={narrationDiff ? { backgroundColor: '#fffbeb', borderRadius: '8px', padding: '0.5rem 0.6rem', border: '1px solid #fcd34d' } : {}}>
+                          <div style={{ fontSize: '0.6rem', fontWeight: 800, color: narrationDiff ? '#b45309' : '#0d6efd', textTransform: 'uppercase' as const, letterSpacing: '0.07em', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                            <svg width="10" height="10" viewBox="0 0 24 24" fill={narrationDiff ? '#b45309' : dotColor}><path d="M12 2a3 3 0 0 1 3 3v7a3 3 0 0 1-6 0V5a3 3 0 0 1 3-3z"/><path d="M19 10v2a7 7 0 0 1-14 0v-2" fill="none" stroke={narrationDiff ? '#b45309' : dotColor} strokeWidth="2"/><line x1="12" y1="19" x2="12" y2="23" stroke={narrationDiff ? '#b45309' : dotColor} strokeWidth="2"/><line x1="8" y1="23" x2="16" y2="23" stroke={narrationDiff ? '#b45309' : dotColor} strokeWidth="2"/></svg>
+                            AI Narration
+                            {narrationDiff && <span style={{ fontSize: '0.55rem', backgroundColor: '#fcd34d', color: '#92400e', borderRadius: '4px', padding: '0px 4px', fontWeight: 700 }}>Diubah</span>}
+                          </div>
+                          <p style={{ margin: 0, fontSize: '0.83rem', color: narrationDiff ? '#92400e' : '#1f2937', fontStyle: 'italic', lineHeight: 1.65, display: '-webkit-box', WebkitLineClamp: 4, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
+                            {storyboard.narration ? `"${storyboard.narration}"` : '—'}
+                          </p>
                         </div>
 
-                        {/* Visual Description */}
-                        <div>
-                          <div style={{ fontSize: '0.6rem', fontWeight: 800, color: '#6b7280', textTransform: 'uppercase' as const, letterSpacing: '0.07em', marginBottom: '0.35rem' }}>
+                        {/* Visual Description — read only */}
+                        <div style={visualDiff ? { backgroundColor: '#f0fdf4', borderRadius: '8px', padding: '0.5rem 0.6rem', border: '1px solid #86efac' } : {}}>
+                          <div style={{ fontSize: '0.6rem', fontWeight: 800, color: visualDiff ? '#15803d' : '#6b7280', textTransform: 'uppercase' as const, letterSpacing: '0.07em', marginBottom: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
                             Visual Description
+                            {visualDiff && <span style={{ fontSize: '0.55rem', backgroundColor: '#86efac', color: '#14532d', borderRadius: '4px', padding: '0px 4px', fontWeight: 700 }}>Diubah</span>}
                           </div>
-                          {secEdit.isEditing ? (
-                            <textarea
-                              value={secEdit.visual}
-                              onChange={(e) => setSectionEdit(prev => ({ ...prev, [secType]: { ...prev[secType], visual: e.target.value } }))}
-                              rows={3}
-                              style={{ width: '100%', padding: '0.55rem 0.7rem', border: '1.5px solid #ced4da', borderRadius: '8px', fontSize: '0.78rem', fontFamily: 'inherit', lineHeight: 1.5, resize: 'vertical', outline: 'none', boxSizing: 'border-box', fontStyle: 'italic', color: '#6b7280' }}
-                            />
-                          ) : (
-                            <p style={{ margin: 0, fontSize: '0.78rem', color: storyboard.visual ? '#6b7280' : '#9ca3af', fontStyle: 'italic', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
-                              {storyboard.visual || '—'}
-                            </p>
-                          )}
+                          <p style={{ margin: 0, fontSize: '0.78rem', color: visualDiff ? '#15803d' : (storyboard.visual ? '#6b7280' : '#9ca3af'), fontStyle: 'italic', lineHeight: 1.55, display: '-webkit-box', WebkitLineClamp: 3, WebkitBoxOrient: 'vertical' as const, overflow: 'hidden' }}>
+                            {storyboard.visual || '—'}
+                          </p>
                         </div>
                       </div>
                     </div>

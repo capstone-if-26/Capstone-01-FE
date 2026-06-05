@@ -14,6 +14,7 @@ import ProjectSummary from "./components/summary";
 // Pastikan getProjectById sudah ditambahkan di project.service.ts Anda
 import { initializeProject, getProjectById } from '@/services/project.service';
 import videoService, { VideoMode } from '@/services/video.service';
+import storyboardService from '@/services/storyboard.service';
 
 // --- DATA DUMMY & OPTIONS ---
 const keyMessageOptions: Record<string, string[]> = {
@@ -323,6 +324,19 @@ function NewProjectContent() {
       fetchProjectData();
     }
   }, [projectId]);
+
+  // Jika di step 5 tapi savedStoryboardId kosong (misal API timeout saat generate), auto-fetch dari server
+  useEffect(() => {
+    if (currentStep !== 5 || savedStoryboardId) return;
+    const pid = savedProjectId || projectId;
+    if (!pid) return;
+    storyboardService.getStoryboardbyProjectId(pid).then((res: any) => {
+      if (res.success && res.data) {
+        const sb = Array.isArray(res.data) ? res.data[0] : res.data;
+        if (sb?.id) setSavedStoryboardId(sb.id);
+      }
+    }).catch(() => {});
+  }, [currentStep, savedStoryboardId, savedProjectId, projectId]);
 
   // ================= LOGIKA EKSTRAK FILE DOKUMEN =================
   const normalizeText = (text: string) =>
@@ -775,10 +789,12 @@ function NewProjectContent() {
 
       await videoService.pollAllUntilComplete(
         videoIdsToPoll,
-        (completedCount, total, lastStatus) => {
-          console.log(`Scene selesai: ${completedCount}/${total} — status: ${lastStatus.status}`);
-          const pct = Math.round((completedCount / total) * 100);
-          setRenderProgress(Math.max(15, pct));
+        (completedCount, total) => {
+          if (completedCount > 0) {
+            // Hanya naikkan berdasarkan scene yang selesai, tidak pernah turunkan
+            const pct = Math.round((completedCount / total) * 100);
+            setRenderProgress(prev => Math.max(prev, pct));
+          }
         },
         5000,
         120

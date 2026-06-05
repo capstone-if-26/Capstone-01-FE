@@ -126,7 +126,7 @@ export const videoService = {
   async regenerateScene(
     videoId: string,
     customPrompt?: string
-  ): Promise<ApiResponse<{ video_id: string; job_id: string; status: string }>> {
+  ): Promise<ApiResponse<{ new_video_id: string; job_id: string; status: string }>> {
     const response = await api.post(`/api/videos/scene/${videoId}/regenerate`, {
       custom_prompt: customPrompt || '',
     });
