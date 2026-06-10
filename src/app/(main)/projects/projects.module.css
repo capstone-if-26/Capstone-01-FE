@@ -743,6 +743,9 @@
   cursor: pointer;
   font-size: var(--text-body-md);
   padding: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
 }
 
 /* ───── MODAL ───── */

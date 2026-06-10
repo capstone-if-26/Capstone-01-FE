@@ -13,7 +13,8 @@ import ProjectSummary from "./components/summary";
 
 // Pastikan getProjectById sudah ditambahkan di project.service.ts Anda
 import { initializeProject, getProjectById } from '@/services/project.service';
-import videoService from '@/services/video.service';
+import videoService, { VideoMode } from '@/services/video.service';
+import storyboardService from '@/services/storyboard.service';
 
 // --- DATA DUMMY & OPTIONS ---
 const keyMessageOptions: Record<string, string[]> = {
@@ -51,6 +52,144 @@ interface Scene {
   narration: string; visual: string;
   isEditing: boolean;
   durationNum: number;
+}
+
+// ================= STORYBOARD BUILDER =================
+function buildDynamicScenes(
+  institutionName: string,
+  offeredDegrees: string,
+  eventContent: string,
+  toneOfVoice: string,
+  selectedKeyMessage: string,
+  selectedTheme: string,
+  prompt: string,
+  videoMode: VideoMode,
+  sceneDur: number
+): Scene[] {
+  const inst = institutionName || 'institusi kami';
+
+  // Ambil 3 program studi pertama saja
+  const programs = offeredDegrees
+    ? offeredDegrees.split(',').slice(0, 3).map(p => p.trim()).filter(Boolean).join(', ')
+    : 'berbagai program unggulan';
+
+  const event = eventContent || 'pendaftaran';
+  const keyMsg = selectedKeyMessage || 'Wujudkan masa depan cerahmu bersama kami.';
+  const tone = toneOfVoice || 'Profesional & Formal';
+  const theme = selectedTheme || 'Tur Kampus Sinematik';
+
+  // ── Narasi per tone ───────────────────────────────────────────
+  const narrationHook: Record<string, string> = {
+    'Santai & Ramah':
+      `Hei, generasi muda! Pernah kepikiran mau kuliah di kampus yang asyik dan berkualitas? Yuk, kenalan sama ${inst}!`,
+    'Profesional & Formal':
+      `${inst} — institusi pendidikan terkemuka yang telah mencetak pemimpin dan profesional unggul selama puluhan tahun.`,
+    'Kreatif & Inovatif':
+      `Siap mengubah ide brilianmu jadi karya nyata? Selamat datang di ${inst}, tempat di mana inovasi terlahir setiap hari!`,
+    'Berwibawa & Meyakinkan':
+      `Bergabunglah dengan ribuan alumni terbaik. ${inst} — pilihan utama bagi mereka yang mengejar standar tertinggi.`,
+  };
+
+  const narrationValue: Record<string, string> = {
+    'Santai & Ramah':
+      `Di ${inst}, kamu bakal belajar ${programs} bareng komunitas yang hangat dan supportif. Seru banget, kan?`,
+    'Profesional & Formal':
+      `Dengan program ${programs}, ${inst} mempersiapkan Anda dengan kompetensi global dan integritas tertinggi. ${keyMsg}`,
+    'Kreatif & Inovatif':
+      `Eksplorasi ${programs} bersama mentor berpengalaman dan ekosistem inovasi ${inst} yang tanpa batas. ${keyMsg}`,
+    'Berwibawa & Meyakinkan':
+      `${inst} menawarkan ${programs} dengan kurikulum berstandar internasional. ${keyMsg}`,
+  };
+
+  const narrationCTA: Record<string, string> = {
+    'Santai & Ramah':
+      `Jangan sampai ketinggalan ${event}! Daftar sekarang dan mulai petualangan belajarmu di ${inst}. Kita tunggu kamu!`,
+    'Profesional & Formal':
+      `Bergabunglah dalam ${event} ${inst}. Jadilah bagian dari generasi unggul yang siap menghadapi tantangan global.`,
+    'Kreatif & Inovatif':
+      `${event} kini dibuka! Ambil langkah pertamamu dan ciptakan masa depan luar biasa bersama ${inst}. Daftarkan diri sekarang!`,
+    'Berwibawa & Meyakinkan':
+      `Daftarkan diri Anda dalam ${event} ${inst} hari ini. Raih posisi terbaik Anda. Kuota terbatas.`,
+  };
+
+  // ── Visual prompt per tema ────────────────────────────────────
+  const modeNote = videoMode === 'image-to-video'
+    ? ` Gunakan logo ${inst} sebagai referensi visual utama.`
+    : videoMode === 'start-end-to-video'
+    ? ` Logo ${inst} sebagai frame pembuka, foto lingkungan kampus sebagai frame penutup.`
+    : '';
+  const extraNote = prompt ? ` Catatan: ${prompt}` : '';
+
+  const visualHook: Record<string, string> = {
+    'Tur Kampus Sinematik':
+      `Aerial drone shot sinematik menyapu kampus ${inst} saat golden hour. Kamera reveal dari langit turun ke gerbang utama yang megah. Pencahayaan hangat keemasan, motion slow-motion cinematik.${modeNote}${extraNote}`,
+    'Cerita Kehidupan Mahasiswa':
+      `Slow-motion montage mahasiswa ${inst}: tertawa bersama di taman, berdiskusi di kelas, mengikuti kegiatan UKM. Warna natural hangat, suasana autentik dan genuine.${modeNote}${extraNote}`,
+    'Keunggulan Akademik':
+      `Close-up dramatis peralatan laboratorium canggih ${inst}. Mahasiswa serius meneliti, layar komputer menyala. Pencahayaan profesional, komposisi presisi dan teknikal.${modeNote}${extraNote}`,
+    'Tren & Gaya Hidup Cepat':
+      `Fast-cut energetik kampus ${inst}: sesi kreatif, olahraga, event kampus. Estetika Gen Z — warna vibrant, transisi cepat dinamis, vertikal-style shots.${modeNote}${extraNote}`,
+  };
+
+  const visualValue: Record<string, string> = {
+    'Tur Kampus Sinematik':
+      `Tracking shot menelusuri fasilitas ${inst}: perpustakaan modern, aula megah, ruang kelas berteknologi. Kamera glide smooth, depth of field sinematik.`,
+    'Cerita Kehidupan Mahasiswa':
+      `Cuplikan interaksi hangat dosen dan mahasiswa ${inst}, pameran karya, kegiatan komunitas. Suasana inklusif dan supportif. Warna cerah natural.`,
+    'Keunggulan Akademik':
+      `Montase riset terkini ${inst}: presentasi hasil penelitian, infografis prestasi dan penghargaan muncul on-screen, kerja sama industri dan partner internasional.`,
+    'Tren & Gaya Hidup Cepat':
+      `Vertical-style shots: mahasiswa ${inst} berkreasi, coding, desain grafis, kolaborasi di co-working space modern. Color grading trendy, music beat-sync.`,
+  };
+
+  const visualCTA: Record<string, string> = {
+    'Tur Kampus Sinematik':
+      `Logo ${inst} reveal sinematik di tengah layar dengan background blur kampus yang indah. Animasi teks elegan: "${event}". Fade smooth ke brand color.`,
+    'Cerita Kehidupan Mahasiswa':
+      `Grup mahasiswa ${inst} tersenyum menatap kamera dengan penuh semangat. Overlay teks ajakan hangat dan ramah. Logo institusi dengan animasi smooth.`,
+    'Keunggulan Akademik':
+      `Split-screen: prestasi mahasiswa di kiri, informasi ${event} di kanan. Logo ${inst} dan tagline muncul tegas. Tone resmi dan percaya diri.`,
+    'Tren & Gaya Hidup Cepat':
+      `Quick-cut highlight terbaik ${inst}, diakhiri freeze-frame mahasiswa tersenyum. Teks "${event}" muncul bold dan besar. Animasi CTA energetik.`,
+  };
+
+  const pad = (n: number) => String(n).padStart(2, '0');
+
+  return [
+    {
+      id: '01',
+      time: '00:00:00',
+      title: '1. Hook / Perkenalan',
+      duration: `00:0${sceneDur}`,
+      status: 'Ready',
+      narration: narrationHook[tone] || narrationHook['Profesional & Formal'],
+      visual: visualHook[theme] || visualHook['Tur Kampus Sinematik'],
+      isEditing: false,
+      durationNum: sceneDur,
+    },
+    {
+      id: '02',
+      time: `00:00:${pad(sceneDur)}`,
+      title: '2. Nilai Unggulan',
+      duration: `00:0${sceneDur}`,
+      status: 'Ready',
+      narration: narrationValue[tone] || narrationValue['Profesional & Formal'],
+      visual: visualValue[theme] || visualValue['Tur Kampus Sinematik'],
+      isEditing: false,
+      durationNum: sceneDur,
+    },
+    {
+      id: '03',
+      time: `00:00:${pad(sceneDur * 2)}`,
+      title: '3. Call to Action',
+      duration: `00:0${sceneDur}`,
+      status: 'Ready',
+      narration: narrationCTA[tone] || narrationCTA['Profesional & Formal'],
+      visual: visualCTA[theme] || visualCTA['Tur Kampus Sinematik'],
+      isEditing: false,
+      durationNum: sceneDur,
+    },
+  ];
 }
 
 // ================= KOMPONEN UTAMA (KONTEN) =================
@@ -99,11 +238,18 @@ function NewProjectContent() {
   const [isEditingCopywriting, setIsEditingCopywriting] = useState(false);
   const [isEditingHashtags, setIsEditingHashtags] = useState(false);
 
+  // Tandai apakah user sudah upload dokumen referensi (agar fetch server tidak overwrite)
+  const docUploadedRef = useRef(false);
+
   // ================= STATES: STORYBOARD (STEP 5) =================
   const [scenes, setScenes] = useState<Scene[]>([]);
   const [isRendering, setIsRendering] = useState(false);
   const [renderProgress, setRenderProgress] = useState(0);
   const [isFinished, setIsFinished] = useState(false);
+
+  // ================= STATES: VIDEO GENERATION SETTINGS =================
+  // start_image → logo dari business brief, end_image → foto lingkungan (auto, tidak diinput user)
+  const [videoMode, setVideoMode] = useState<VideoMode>('text-to-video');
 
   // ================= EFEK: LOAD PROJECT DARI DASHBOARD =================
   useEffect(() => {
@@ -120,7 +266,7 @@ function NewProjectContent() {
             if (data.name) setProjectName(data.name);
             if (bb.institution_name || data.institution_name || data.name) setInstitutionName(bb.institution_name || data.institution_name || data.name || '');
             if (data.description || bb.institution_history || data.institution_history) setInstitutionHistory(data.description || bb.institution_history || data.institution_history || '');
-            if (data.theme || cb.theme || data.selected_theme) setSelectedTheme(data.theme || cb.theme || data.selected_theme || '');
+            if (!docUploadedRef.current && (data.theme || cb.theme || data.selected_theme)) setSelectedTheme(data.theme || cb.theme || data.selected_theme || '');
             
             if (cb.event_content || data.event_content) setEventContent(cb.event_content || data.event_content);
             if (cb.tone_of_voice || data.tone_of_voice) setToneOfVoice(cb.tone_of_voice || data.tone_of_voice);
@@ -133,6 +279,7 @@ function NewProjectContent() {
             // 2. Isi form gambar dengan URL dari Supabase / Backend
             if (bb.logo_path || data.logo_url) setLogoPreview(bb.logo_path || data.logo_url);
             if (bb.environment_path || data.env_url) setEnvPreview(bb.environment_path || data.env_url);
+
             
             setSavedProjectId(data.id || projectId);
 
@@ -178,35 +325,163 @@ function NewProjectContent() {
     }
   }, [projectId]);
 
+  // Jika di step 5 tapi savedStoryboardId kosong (misal API timeout saat generate), auto-fetch dari server
+  useEffect(() => {
+    if (currentStep !== 5 || savedStoryboardId) return;
+    const pid = savedProjectId || projectId;
+    if (!pid) return;
+    storyboardService.getStoryboardbyProjectId(pid).then((res: any) => {
+      if (res.success && res.data) {
+        const sb = Array.isArray(res.data) ? res.data[0] : res.data;
+        if (sb?.id) setSavedStoryboardId(sb.id);
+      }
+    }).catch(() => {});
+  }, [currentStep, savedStoryboardId, savedProjectId, projectId]);
+
   // ================= LOGIKA EKSTRAK FILE DOKUMEN =================
-  const normalizeText = (text: string) => text.replace(/\r\n/g, '\n').replace(/\t/g, ' ').replace(/ +/g, ' ').trim();
-  const parseLabelLine = (line: string) => {
-    const split = line.split(/[:\-–—]/);
-    return split.length > 1 ? split.slice(1).join('').trim() : line.trim();
-  };
+  const normalizeText = (text: string) =>
+    text.replace(/\r\n/g, '\n').replace(/\r/g, '\n').replace(/\t/g, ' ').replace(/ +/g, ' ').trim();
 
   const extractProjectFields = (text: string) => {
     const normalized = normalizeText(text);
-    const lines = normalized.split('\n').map((line) => line.trim()).filter(Boolean);
+    // Filter baris kosong DAN baris separator (----, ====, dsb)
+    const lines = normalized.split('\n')
+      .map((l) => l.trim())
+      .filter((l) => l && !/^[=\-*]{3,}$/.test(l));
+    const textLower = normalized.toLowerCase();
 
-    const findLine = (keywords: string[]) => lines.find((line) => keywords.some((k) => line.toLowerCase().includes(k)));
-    const institutionLine = findLine(['nama institusi', 'nama kampus', 'kampus', 'universitas', 'institut']);
-    const historyLine = findLine(['sejarah', 'latar belakang', 'asal usul', 'berdiri']);
-    const degreeLine = findLine(['program studi', 'prodi', 'fakultas', 'jurusan']);
-    const levelLine = findLine(['tingkat sekolah', 'jenjang pendidikan', 'jenjang']);
+    const findIdx = (keywords: string[]) =>
+      lines.findIndex((l) => keywords.some((k) => l.toLowerCase().includes(k)));
 
-    if (!institutionName && institutionLine) setInstitutionName(parseLabelLine(institutionLine));
-    if (!institutionHistory && historyLine) setInstitutionHistory(parseLabelLine(historyLine));
-    if (!offeredDegrees && degreeLine) setOfferedDegrees(parseLabelLine(degreeLine));
-    if (!schoolLevel && levelLine) {
-      const parsedLevel = parseLabelLine(levelLine);
-      const levels = ["PreSchool", "TK", "SD", "SMP", "SMA", "SMK", "Perguruan Tinggi"];
-      const matched = levels.find(l => parsedLevel.toLowerCase().includes(l.toLowerCase()));
-      if (matched) {
-        setSchoolLevel(matched);
-      } else {
-        setSchoolLevel(parsedLevel);
+    // Ekstrak value setelah separator (:/-/–/—) atau ambil baris-baris berikutnya
+    const extractValue = (keywords: string[], maxNext = 1): string => {
+      const idx = findIdx(keywords);
+      if (idx < 0) return '';
+      const afterSep = lines[idx].split(/[:\-–—]/).slice(1).join('').trim();
+      if (afterSep.length > 3) return afterSep;
+      const nextLines: string[] = [];
+      for (let i = idx + 1; i < Math.min(idx + 1 + maxNext, lines.length); i++) {
+        // Stop jika baris berikutnya adalah label baru (Huruf + kata pendek + separator)
+        if (/^[A-Za-z][A-Za-z\s]{1,25}[:\-–—]/.test(lines[i])) break;
+        nextLines.push(lines[i]);
       }
+      return nextLines.join(' ').trim() || afterSep;
+    };
+
+    // ── Step 1: Business Brief ─────────────────────────────────────
+    // Selalu overwrite jika ditemukan di dokumen
+    const projName = extractValue(['nama project', 'nama proyek', 'project name', 'judul project', 'judul proyek', 'nama video', 'judul video']);
+    if (projName) setProjectName(projName);
+
+    const instName = extractValue(['nama institusi', 'nama kampus', 'nama sekolah', 'nama universitas', 'nama perguruan tinggi', 'nama lembaga']);
+    if (instName) setInstitutionName(instName);
+
+    const history = extractValue(['latar belakang', 'sejarah', 'tentang kami', 'tentang institusi', 'asal usul', 'berdiri sejak'], 5);
+    if (history) setInstitutionHistory(history);
+
+    const degrees = extractValue(['program studi', 'prodi', 'jurusan', 'fakultas', 'program yang ditawarkan', 'program unggulan', 'bidang studi'], 5);
+    if (degrees) setOfferedDegrees(degrees);
+
+    const levelVal = extractValue(['jenjang pendidikan', 'tingkat sekolah', 'jenjang', 'level pendidikan', 'tingkat pendidikan']);
+    if (levelVal) {
+      const levels = ['PreSchool', 'TK', 'SD', 'SMP', 'SMA', 'SMK', 'Perguruan Tinggi'];
+      const matched = levels.find((l) => levelVal.toLowerCase().includes(l.toLowerCase()));
+      setSchoolLevel(matched || levelVal);
+    }
+
+    // ── Step 2: Creative Brief ─────────────────────────────────────
+
+    // eventContent → wajib cocok dengan <option> dropdown
+    const eventVal = extractValue(['kegiatan', 'event', 'acara', 'pendaftaran', 'pmb', 'open day', 'open house'], 2);
+    if (eventVal) {
+      const ev = eventVal.toLowerCase();
+      const eventMap: [string, string][] = [
+        ['penerimaan',           'Penerimaan Mahasiswa Baru'],
+        ['mahasiswa baru',       'Penerimaan Mahasiswa Baru'],
+        ['pmb',                  'Penerimaan Mahasiswa Baru'],
+        ['snbp',                 'Penerimaan Mahasiswa Baru'],
+        ['snbt',                 'Penerimaan Mahasiswa Baru'],
+        ['dies natalis',         'Dies Natalis / Ulang Tahun'],
+        ['ulang tahun',          'Dies Natalis / Ulang Tahun'],
+        ['anniversary',          'Dies Natalis / Ulang Tahun'],
+        ['beasiswa',             'Promosi Beasiswa'],
+        ['scholarship',          'Promosi Beasiswa'],
+        ['pengenalan kehidupan', 'Pengenalan Kehidupan Kampus'],
+        ['pkkmb',                'Pengenalan Kehidupan Kampus'],
+        ['orientasi',            'Pengenalan Kehidupan Kampus'],
+      ];
+      const matched = eventMap.find(([k]) => ev.includes(k));
+      if (matched) setEventContent(matched[1]);
+    }
+
+    // videoDuration → wajib cocok dengan <option> dropdown
+    const durVal = extractValue(['durasi video', 'durasi', 'duration', 'panjang video', 'lama video']);
+    if (durVal) {
+      const dv = durVal.toLowerCase();
+      if (dv.includes('short'))                              setVideoDuration('Short (4 detik)');
+      else if (dv.includes('medium') || dv.includes('sedang')) setVideoDuration('Medium (6 detik)');
+      else if (dv.includes('long')   || dv.includes('panjang')) setVideoDuration('Long (8 detik)');
+      else {
+        // Angka murni: bisa total detik (12/18/24) atau per scene (4/6/8)
+        // Jika > 8, anggap total → bagi 3 → per scene
+        const n = parseInt(dv.replace(/\D/g, ''));
+        if (!isNaN(n) && n > 0) {
+          const perScene = n > 8 ? Math.round(n / 3) : n;
+          if (perScene <= 4)      setVideoDuration('Short (4 detik)');
+          else if (perScene <= 6) setVideoDuration('Medium (6 detik)');
+          else                    setVideoDuration('Long (8 detik)');
+        }
+      }
+    }
+
+    // Tone of voice — scan seluruh dokumen
+    if (textLower.match(/\bberwibawa\b|\bmeyakinkan\b|\bprestisius\b|\bauthoritative\b/)) {
+      setToneOfVoice('Berwibawa & Meyakinkan');
+    } else if (textLower.match(/\bprofesional\b|\bformal\b|\bresmi\b/)) {
+      setToneOfVoice('Profesional & Formal');
+    } else if (textLower.match(/\bkreatif\b|\binovatif\b|\bcreative\b|\binnovative\b/)) {
+      setToneOfVoice('Kreatif & Inovatif');
+    }
+
+    // Key message — cocokkan dengan opsi yang ada
+    const keyMsgVal = extractValue(['pesan utama', 'key message', 'pesan kunci', 'tagline', 'slogan', 'nilai utama', 'usp', 'unique selling point']);
+    if (keyMsgVal) {
+      const allMessages = Object.values(keyMessageOptions).flat();
+      const kv = keyMsgVal.toLowerCase();
+      const matched = allMessages.find((m) =>
+        m.toLowerCase().includes(kv.slice(0, 20)) || kv.includes(m.toLowerCase().slice(0, 20))
+      );
+      if (matched) setSelectedKeyMessage(matched);
+    }
+
+    // Prompt / instruksi tambahan
+    const promptVal = extractValue(['instruksi tambahan', 'catatan khusus', 'notes', 'prompt', 'arahan tambahan', 'keterangan khusus'], 3);
+    if (promptVal) setPrompt(promptVal);
+
+    // ── Step 3: Tema Video ─────────────────────────────────────────
+    // Gunakan regex langsung pada full text agar robust terhadap variasi format
+    const themeMap: [string, string][] = [
+      ['tur kampus',          'Tur Kampus Sinematik'],
+      ['sinematik',           'Tur Kampus Sinematik'],
+      ['kehidupan mahasiswa', 'Cerita Kehidupan Mahasiswa'],
+      ['keseharian',          'Cerita Kehidupan Mahasiswa'],
+      ['keunggulan akademik', 'Keunggulan Akademik'],
+      ['laboratorium',        'Keunggulan Akademik'],
+      ['riset',               'Keunggulan Akademik'],
+      ['prestasi',            'Keunggulan Akademik'],
+      ['tren',                'Tren & Gaya Hidup Cepat'],
+      ['gen z',               'Tren & Gaya Hidup Cepat'],
+      ['gaya hidup',          'Tren & Gaya Hidup Cepat'],
+      ['energik',             'Tren & Gaya Hidup Cepat'],
+    ];
+
+    // Coba ambil dari label eksplisit "Tema Video: ..."
+    const themeRegex = normalized.match(/tema\s*video\s*[:\-–—]\s*(.+)/i);
+    const themeVal = themeRegex ? themeRegex[1].trim() : extractValue(['tema video', 'theme', 'konsep video', 'gaya video', 'tipe video']);
+    if (themeVal) {
+      const tv = themeVal.toLowerCase();
+      const matched = themeMap.find(([k]) => tv.includes(k));
+      if (matched) setSelectedTheme(matched[1]);
     }
   };
 
@@ -258,6 +533,7 @@ function NewProjectContent() {
           text += content.items.map((item: any) => item.str || '').join(' ') + '\n';
         }
         setPdfText(text);
+        docUploadedRef.current = true;
         extractProjectFields(text);
       };
       reader.readAsArrayBuffer(selectedFile);
@@ -267,6 +543,7 @@ function NewProjectContent() {
     if (fileName.endsWith('.docx') || selectedFile.type.includes('wordprocessingml')) {
       const text = await extractDocxText(selectedFile);
       setPdfText(text);
+      docUploadedRef.current = true;
       extractProjectFields(text);
       return;
     }
@@ -274,6 +551,7 @@ function NewProjectContent() {
     if (selectedFile.type === 'text/plain' || fileName.endsWith('.txt')) {
       const text = await selectedFile.text();
       setPdfText(text);
+      docUploadedRef.current = true;
       extractProjectFields(text);
       return;
     }
@@ -313,7 +591,7 @@ function NewProjectContent() {
   // ================= EFEK: AUTO GENERATE COPYWRITING DI STEP 4 =================
   useEffect(() => {
     if (currentStep === 4) {
-      const generatedCopy = `Halo generasi masa depan! ✨\n\nTahukah kamu bahwa ${selectedKeyMessage.toLowerCase()} Di ${institutionName}, kami siap membantumu mewujudkan impian itu.\n\nJangan lewatkan momen ${eventContent} tahun ini. Yuk, raih mimpimu bersama kami! 👇`;
+      const generatedCopy = `Halo generasi masa depan!\n\nTahukah kamu bahwa ${selectedKeyMessage.toLowerCase()} Di ${institutionName}, kami siap membantumu mewujudkan impian itu.\n\nJangan lewatkan momen ${eventContent} tahun ini. Yuk, raih mimpimu bersama kami!`;
       const generatedHash = `#${institutionName.replace(/\s+/g, '')} #${eventContent.replace(/\s+/g, '')} #Pendidikan #KampusImpian #SevimaAI`;
       setEditableCopywriting(generatedCopy);
       setEditableHashtags(generatedHash);
@@ -375,29 +653,12 @@ function NewProjectContent() {
         });
 
       // 2. Siapkan data Naskah Storyboard
-      const dynamicScenes: Scene[] = [
-        {
-          id: '01', time: '00:00:00', title: '1. Intro & Hook', duration: '00:15', status: 'Ready',
-          narration: `"Halo generasi masa depan! Tahukah kamu bahwa ${selectedKeyMessage?.toLowerCase() || 'pendidikan itu penting'}"`,
-          visual: `Visual bergaya ${toneOfVoice}. Menampilkan gerbang utama ${institutionName || 'kampus'}. Sesuai instruksi: ${prompt || 'Buat semenarik mungkin'}.`,
-          isEditing: false,
-          durationNum: 15
-        },
-        {
-          id: '02', time: '00:00:15', title: '2. Suasana & Keunggulan Kampus', duration: '00:20', status: 'Ready',
-          narration: `"Di ${institutionName || 'sini'}, kami siap membantumu mewujudkan impian itu melalui program unggulan kami."`,
-          visual: `Gaya visual: ${selectedTheme}. Memperlihatkan mahasiswa sedang beraktivitas, fasilitas modern.`,
-          isEditing: false,
-          durationNum: 20
-        },
-        {
-          id: '03', time: '00:00:35', title: '3. Promosi & Call to Action', duration: '00:10', status: 'Ready',
-          narration: `"Jangan lewatkan momen ${eventContent || 'pendaftaran'} tahun ini. Yuk, raih mimpimu bersama kami!"`,
-          visual: `Logo ${institutionName || 'kampus'} muncul di tengah layar dengan teks ajakan (Call to Action).`,
-          isEditing: false,
-          durationNum: 10
-        }
-      ];
+      const sceneDur = videoDuration === 'Short (4 detik)' ? 4 : videoDuration === 'Long (8 detik)' ? 8 : 6;
+      const dynamicScenes = buildDynamicScenes(
+        institutionName, offeredDegrees, eventContent,
+        toneOfVoice, selectedKeyMessage, selectedTheme,
+        prompt, videoMode, sceneDur
+      );
 
       setScenes(dynamicScenes);
       
@@ -426,6 +687,7 @@ function NewProjectContent() {
   // ================= FUNGSI STEP 5 (EDIT SCENE & RENDER) =================
   const toggleEditScene = (id: string) => setScenes((prev) => prev.map(s => s.id === id ? { ...s, isEditing: !s.isEditing } : s));
   const handleSceneChange = (id: string, field: 'narration' | 'visual', value: string) => setScenes((prev) => prev.map(s => s.id === id ? { ...s, [field]: value } : s));
+  const handleSceneDuration = (id: string, dur: number) => setScenes((prev) => prev.map(s => s.id === id ? { ...s, durationNum: dur, duration: `00:0${dur}` } : s));
   
   const isRenderingRef = useRef(false);
 
@@ -459,36 +721,85 @@ function NewProjectContent() {
         console.warn("Gagal auto-save storyboard:", err);
       }
 
-      // 1. Memanggil endpoint generate video backend
-      const res = await videoService.generateVideo({
-        project_id: pid,
-        storyboard_id: savedStoryboardId,
-        custom_prompt: prompt
-      });
-      
-      const videoId = (res.data as any).video_id;
-      if (!videoId) {
+      // 1. Cek apakah ada video yang SEDANG DIPROSES
+      let videoIdsToPoll: string[] = [];
+      try {
+        const variantsRes = await videoService.getStoryboardVariants(savedStoryboardId);
+        if (variantsRes.success && variantsRes.data && variantsRes.data.length > 0) {
+          const processingVideos = variantsRes.data.filter((v: any) =>
+            v.status === 'pending' || v.status === 'processing' || v.status === 'stitching_video'
+          );
+          if (processingVideos.length > 0) {
+            videoIdsToPoll = processingVideos.map((v: any) => v.id);
+          }
+        }
+      } catch (e) {
+        console.log("No existing video found or error fetching variants", e);
+      }
+
+      // 2. Generate 3 video (satu per scene) jika belum ada yang diproses
+      if (videoIdsToPoll.length === 0) {
+        // Gambar otomatis dari Business Brief (hanya CDN URL, bukan blob/object URL)
+        const cdnLogo = logoPreview?.startsWith('http') ? logoPreview : undefined;
+        const cdnEnv  = envPreview?.startsWith('http') ? envPreview : undefined;
+
+        if (videoMode === 'image-to-video' && !cdnLogo) {
+          alert('Mode Image-to-Video membutuhkan Logo Institut yang sudah tersimpan (CDN URL). Upload logo di Step 1 terlebih dahulu.');
+          setIsRendering(false); isRenderingRef.current = false; return;
+        }
+        if (videoMode === 'start-end-to-video' && (!cdnLogo || !cdnEnv)) {
+          alert('Mode Start-End-to-Video membutuhkan Logo Institut DAN Foto Lingkungan yang sudah tersimpan (CDN URL).');
+          setIsRendering(false); isRenderingRef.current = false; return;
+        }
+
+        try {
+          const res = await videoService.generateVideo({
+            project_id: pid,
+            storyboard_id: savedStoryboardId,
+            custom_prompt: prompt,
+            video_mode: videoMode,
+            start_image: videoMode !== 'text-to-video' ? cdnLogo : undefined,
+            end_image: videoMode === 'start-end-to-video' ? cdnEnv : undefined,
+            resolution: '1080p',
+          });
+          const videosData = (res.data as any).videos as Array<{ video_id: string }>;
+          videoIdsToPoll = videosData.map(v => v.video_id).filter(Boolean);
+        } catch (err: any) {
+          const msg = err?.response?.data?.message;
+          if (msg === "sedang ada proses generate video yang berjalan untuk storyboard ini") {
+            try {
+              const variantsRes = await videoService.getStoryboardVariants(savedStoryboardId);
+              if (variantsRes.success && variantsRes.data && variantsRes.data.length > 0) {
+                videoIdsToPoll = variantsRes.data.map((v: any) => v.id);
+              }
+            } catch (e) {}
+          }
+          if (videoIdsToPoll.length === 0) throw err;
+        }
+      }
+
+      if (videoIdsToPoll.length === 0) {
         throw new Error("Video ID tidak ditemukan di respons backend");
       }
 
-      // 2. Polling progress dengan batas maksimum tertentu
-      let currentProgress = 15;
+      // 3. Poll semua 3 video sekaligus
       const progressInterval = setInterval(() => {
-        setRenderProgress(prev => Math.min(prev + 5, 85));
+        setRenderProgress(prev => Math.min(prev + 3, 80));
       }, 3000);
 
-      await videoService.pollUntilComplete(
-        videoId,
-        (status) => {
-           console.log("Status video saat ini:", status.status);
-           if (status.status === "stitching_video") {
-              setRenderProgress(90);
-           }
+      await videoService.pollAllUntilComplete(
+        videoIdsToPoll,
+        (completedCount, total) => {
+          if (completedCount > 0) {
+            // Hanya naikkan berdasarkan scene yang selesai, tidak pernah turunkan
+            const pct = Math.round((completedCount / total) * 100);
+            setRenderProgress(prev => Math.max(prev, pct));
+          }
         },
-        5000, 
-        120 
+        5000,
+        120
       );
-      
+
       clearInterval(progressInterval);
       setRenderProgress(100);
       setIsRendering(false);
@@ -515,16 +826,41 @@ function NewProjectContent() {
         </div>
       )}
 
-      {/* STEPPER HEADER (MENJADI 5 STEP) */}
+      {/* STEPPER HEADER — setiap step bisa diklik */}
       <div className={styles.stepper}>
         <div className={styles.stepLine}></div>
         <div className={styles.stepLineActive} style={{ width: `${(currentStep - 1) * 25}%` }}></div>
-        {['Business', 'Creative', 'Tema', 'Ringkasan', 'Storyboard'].map((step, idx) => (
-          <div key={idx} className={`${styles.stepItem} ${currentStep >= idx + 1 ? styles.active : ''}`}>
-            <div className={styles.stepCircle}>{idx + 1}</div>
-            <span className={styles.stepText}>{step}</span>
-          </div>
-        ))}
+        {['Business', 'Creative', 'Tema', 'Ringkasan', 'Storyboard'].map((step, idx) => {
+          const isLocked = idx === 4 && !savedStoryboardId;
+          return (
+            <div
+              key={idx}
+              className={`${styles.stepItem} ${!isLocked && currentStep >= idx + 1 ? styles.active : ''}`}
+              onClick={() => { if (!isLocked) setCurrentStep(idx + 1); }}
+              style={{ cursor: isLocked ? 'not-allowed' : 'pointer' }}
+              title={isLocked ? 'Generate Storyboard terlebih dahulu dari halaman Ringkasan' : undefined}
+            >
+              {isLocked ? (
+                <div className={styles.stepCircle} style={{
+                  backgroundColor: '#f9fafb',
+                  borderStyle: 'dashed',
+                  borderColor: '#d1d5db',
+                  color: '#9ca3af',
+                }}>
+                  <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"/>
+                    <path d="M7 11V7a5 5 0 0 1 10 0v4"/>
+                  </svg>
+                </div>
+              ) : (
+                <div className={styles.stepCircle}>{idx + 1}</div>
+              )}
+              <span className={styles.stepText} style={isLocked ? { color: '#9ca3af' } : {}}>
+                {step}
+              </span>
+            </div>
+          );
+        })}
       </div>
 
       {/* STEP 1: BUSINESS BRIEF */}
@@ -549,6 +885,7 @@ function NewProjectContent() {
           selectedKeyMessage={selectedKeyMessage} setSelectedKeyMessage={setSelectedKeyMessage}
           videoDuration={videoDuration} setVideoDuration={setVideoDuration}
           prompt={prompt} setPrompt={setPrompt}
+          videoMode={videoMode} setVideoMode={setVideoMode}
           keyMessageOptions={keyMessageOptions} handleNext={handleNext} prevStep={prevStep}
         />
       )}
@@ -564,9 +901,14 @@ function NewProjectContent() {
       {/* STEP 4: SUMMARY */}
       {currentStep === 4 && (
         <ProjectSummary
-          briefRef={briefRef} institutionName={institutionName} schoolLevel={schoolLevel} offeredDegrees={offeredDegrees}
-          eventContent={eventContent} videoDuration={videoDuration} selectedTheme={selectedTheme} toneOfVoice={toneOfVoice}
-          selectedKeyMessage={selectedKeyMessage} prompt={prompt} logoPreview={logoPreview} envPreview={envPreview}
+          briefRef={briefRef}
+          institutionName={institutionName} institutionHistory={institutionHistory}
+          schoolLevel={schoolLevel} offeredDegrees={offeredDegrees}
+          eventContent={eventContent} videoDuration={videoDuration}
+          selectedTheme={selectedTheme} toneOfVoice={toneOfVoice}
+          selectedKeyMessage={selectedKeyMessage} prompt={prompt}
+          videoMode={videoMode}
+          logoPreview={logoPreview} envPreview={envPreview}
           editableCopywriting={editableCopywriting} setEditableCopywriting={setEditableCopywriting}
           editableHashtags={editableHashtags} setEditableHashtags={setEditableHashtags}
           isEditingCopywriting={isEditingCopywriting} setIsEditingCopywriting={setIsEditingCopywriting}
@@ -592,13 +934,15 @@ function NewProjectContent() {
                 
                 <div style={{ background: '#f8f9fa', border: '1px solid #e9ecef', borderRadius: '12px', padding: '1.5rem', flex: 1, display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1a1a1a' }}>{scene.title} <span style={{color: '#0d6efd', fontSize: '1rem'}}>✓</span></h3>
+                    <h3 style={{ margin: 0, fontSize: '1.1rem', color: '#1a1a1a' }}>{scene.title}</h3>
                     {scene.isEditing ? (
-                      <button onClick={() => toggleEditScene(scene.id)} style={{ backgroundColor: '#20c997', color: 'white', border: 'none', padding: '0.4rem 1rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>✓ Simpan Teks</button>
+                      <button onClick={() => toggleEditScene(scene.id)} style={{ backgroundColor: '#20c997', color: 'white', border: 'none', padding: '0.4rem 1rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>Simpan Teks</button>
                     ) : (
-                      <button onClick={() => toggleEditScene(scene.id)} style={{ backgroundColor: 'white', color: '#495057', border: '1px solid #ced4da', padding: '0.4rem 1rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>✏️ Edit Teks</button>
+                      <button onClick={() => toggleEditScene(scene.id)} style={{ backgroundColor: 'white', color: '#495057', border: '1px solid #ced4da', padding: '0.4rem 1rem', borderRadius: '6px', fontSize: '0.85rem', fontWeight: 600, cursor: 'pointer' }}>Edit Teks</button>
                     )}
                   </div>
+
+                  <div style={{ fontSize: '0.7rem', color: '#6c757d' }}>Durasi: <strong>{scene.durationNum}s</strong></div>
 
                   <div style={{ fontSize: '0.7rem', fontWeight: 700, color: '#0d6efd', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '-0.5rem' }}>AI NARRATION (SULIH SUARA)</div>
                   {scene.isEditing ? (
@@ -621,23 +965,50 @@ function NewProjectContent() {
           {isRendering ? (
             <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: '#f8f9fa', borderRadius: '12px' }}>
               <div className={styles.spinner} style={{width: '32px', height: '32px', border: '3px solid #e9ecef', borderTopColor: '#0d6efd'}}></div>
-              <h3 style={{marginBottom: '0.5rem'}}>AI sedang meramu video Anda...</h3>
+              <h3 style={{marginBottom: '0.5rem'}}>AI sedang menghasilkan 3 scene video Anda...</h3>
               <div style={{ width: '100%', height: '8px', backgroundColor: '#e9ecef', borderRadius: '10px', marginTop: '1rem', overflow: 'hidden' }}>
                 <div style={{ height: '100%', backgroundColor: '#0d6efd', width: `${renderProgress}%`, transition: 'width 0.3s ease' }}></div>
               </div>
             </div>
           ) : isFinished ? (
             <div style={{ textAlign: 'center', padding: '2rem', backgroundColor: '#e6f4ea', borderRadius: '12px', border: '1px solid #c3e6cb' }}>
-              <h3 style={{ color: '#137333', margin: '0 0 0.5rem 0' }}>✨ Video Berhasil Dibuat!</h3>
+              <h3 style={{ color: '#137333', margin: '0 0 0.5rem 0' }}>Video Berhasil Dibuat!</h3>
               <p style={{ color: '#155724', margin: '0 0 1.5rem 0', fontSize: '0.9rem' }}>Video marketing Anda sudah siap diunduh atau diputar.</p>
               <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem' }}>
                 <button style={{ backgroundColor: '#0d6efd', color: 'white', border: 'none', padding: '0.75rem 1.5rem', borderRadius: '50px', fontWeight: 600, cursor: 'pointer' }} onClick={() => { window.location.href = `/preview/${savedProjectId || projectId}`; }}>Preview & Download Video</button>
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '1rem', borderTop: '1px solid #e9ecef', paddingTop: '2rem' }}>
-              <button style={{ background: 'transparent', color: '#6c757d', border: 'none', padding: '0.75rem 1.5rem', fontWeight: 600, cursor: 'pointer' }} onClick={() => setCurrentStep(4)}>← Kembali ke Ringkasan</button>
-              <button style={{ backgroundColor: '#0d6efd', color: 'white', border: 'none', padding: '1rem 2rem', borderRadius: '50px', fontSize: '1.1rem', fontWeight: 600, cursor: 'pointer', boxShadow: '0 4px 12px rgba(13,110,253,0.2)' }} onClick={handleFinalRender}>Combine & Render Final Video ✨</button>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '1rem', borderTop: '1px solid #e9ecef', paddingTop: '2rem', flexWrap: 'wrap' }}>
+              <button style={{ background: 'transparent', color: '#6c757d', border: 'none', padding: '0.75rem 1.5rem', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }} onClick={() => setCurrentStep(4)}>
+                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><polyline points="15 18 9 12 15 6"/></svg>
+                Kembali ke Ringkasan
+              </button>
+              <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.4rem' }}>
+                {!savedStoryboardId && (
+                  <p style={{ margin: 0, fontSize: '0.78rem', color: '#dc3545', fontWeight: 500 }}>
+                    Klik <strong>Generate Storyboard</strong> di Ringkasan terlebih dahulu sebelum membuat video.
+                  </p>
+                )}
+                <button
+                  onClick={handleFinalRender}
+                  disabled={!savedStoryboardId}
+                  style={{
+                    backgroundColor: savedStoryboardId ? '#0d6efd' : '#ced4da',
+                    color: 'white',
+                    border: 'none',
+                    padding: '1rem 2rem',
+                    borderRadius: '50px',
+                    fontSize: '1.1rem',
+                    fontWeight: 600,
+                    cursor: savedStoryboardId ? 'pointer' : 'not-allowed',
+                    boxShadow: savedStoryboardId ? '0 4px 12px rgba(13,110,253,0.2)' : 'none',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  Generate 3 Scene Videos
+                </button>
+              </div>
             </div>
           )}
         </div>

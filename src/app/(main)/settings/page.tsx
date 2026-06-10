@@ -199,7 +199,7 @@ export default function SettingsPage() {
           {/* Card: Credits */}
           <div className={styles.planCard}>
             <div style={{position: 'relative', zIndex: 2}}>
-              <h3>Credits ✨</h3>
+              <h3>Credits</h3>
               <p>Sisa kredit untuk generate video AI.</p>
 
               <div className={styles.storageInfo}>
